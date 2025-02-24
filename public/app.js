@@ -1,4 +1,4 @@
-import app from "../src/config.js";
+import app from "./config.js";
 import { getAuth, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js';
 
 const auth = getAuth(app);
