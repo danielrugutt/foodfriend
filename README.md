@@ -38,7 +38,8 @@ npm install -g firebase-tools
 6. Make .env & firebase-auth.json in the root directory, and get the keys needed (will probably make a sendto link for this)
 
 ### To run
-If using a venv and not in it, make sure to start it first:
+If using a venv and not in it, make sure to start it first.
+
 WINDOWS - Activate the virtual environment
 ``` sh
 .\venv\Scripts\activate
