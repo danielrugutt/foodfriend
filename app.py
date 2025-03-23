@@ -52,6 +52,7 @@ def authorize():
         return "Unauthorized", 401
 
     token = token[7:]  # Strip off 'Bearer ' to get the actual token
+    print(f"Received token: {token}")
 
     try:
         decoded_token = auth.verify_id_token(token, check_revoked=True, clock_skew_seconds=60) # Validate token here
