@@ -26,13 +26,16 @@
     "indexes": "firestore.indexes.json"
   },
   "hosting": {
+    "public": "static",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
     "rewrites": [
       {
-        "source": "/api/**",
-        "run": {
-          "serviceId": "default",
-          "region": "us-central1"
-        }
+        "source": "**",
+        "destination": "https://foodfriend-service-580311697199.us-central1.run.app"
       }
     ]
   }
