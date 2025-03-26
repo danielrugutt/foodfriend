@@ -6,7 +6,9 @@ from firebase_admin import credentials, firestore, auth
 from datetime import timedelta
 import os
 from dotenv import load_dotenv
-
+from DietaryPreference import DietaryPreference
+from Search import Search
+import sys
 load_dotenv()
 
 app = Flask(__name__)
@@ -69,6 +71,16 @@ def authorize():
 @app.route('/')
 def home():
     return render_template('home.html')
+
+@app.route('/search')
+def search():
+    user_diet=DietaryPreference("greek","paprika","200","Peanut","vegetarian")
+    user_search=Search(user_diet)
+    query="naan"
+    response=user_search.search(query)
+    for recipe in response['results']:
+        print(f"Recipe Name: {recipe["title"]} Recipe ID:{recipe["id"]}",file=sys.stderr)
+    return render_template("search_results.html", results=response,search_query=query)
 
 @app.route('/login')
 def login():
