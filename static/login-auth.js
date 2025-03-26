@@ -208,7 +208,7 @@ function loginUser(user, idToken) {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${idToken}`
         },
-        credentials: 'same-origin'  // Ensures cookies are sent with the request
+        // credentials: 'same-origin'  // Ensures cookies are sent with the request
     }).then(response => {
         if (response.ok) {
             window.location.href = '/dashboard';

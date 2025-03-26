@@ -25,5 +25,5 @@ venv/
 node_modules/
 
 # Private firebase info
-firebase-auth.json
+
 
