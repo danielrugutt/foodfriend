@@ -4,20 +4,20 @@ from firebase_admin import credentials, firestore, auth
 from datetime import timedelta
 from dotenv import load_dotenv
 from typing import List
-import secrets
-import os
-import sys
-import firebase_admin
 from classes.DietaryPreference import DietaryPreference
 from classes.Search import Search
 from classes.Recipe import *
 from classes.Exporter import *
+import secrets
+import os
+import sys
+import firebase_admin
+import oracledb
 
 load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
-# template_dir = os.path.abspath('public/templates')
 
 # Configure session cookie settings
 app.config['SESSION_COOKIE_SECURE'] = True  # Ensure cookies are sent over HTTPS
@@ -26,12 +26,22 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=1)  # Adjust session e
 app.config['SESSION_REFRESH_EACH_REQUEST'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Can be 'Strict', 'Lax', or 'None'
 
-
 # Firebase Admin SDK setup
 cred = credentials.Certificate("firebase-auth.json")
 firebase_admin.initialize_app(cred)
 db = firestore.client()
 
+# Oracle setup
+oracle_connection = oracledb.connect (
+    user="IT326T06",
+    password = os.getenv('ORACLE_PASSWORD'),
+    dsn="""(DESCRIPTION=
+    (ADDRESS=(PROTOCOL=TCP)(HOST=10.110.10.90)(PORT=1521))
+    (CONNECT_DATA=(SID=oracle)))""")
+
+cursor = oracle_connection.cursor()
+cursor.execute("SELECT 'Connected' FROM dual")
+print(cursor.fetchone()[0], "to the Oracle database!")
 
 
 ########################################
