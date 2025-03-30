@@ -42,6 +42,11 @@
         <p><strong>Protein:</strong> {{ recipe.nutrition_info.protein }}g</p>
         <p><strong>Carbs:</strong> {{ recipe.nutrition_info.carbs }}g</p>
         <p><strong>Fats:</strong> {{ recipe.nutrition_info.fats }}g</p>
+
+        <!--this does not actually work-->
+        <a href="{{ url_for('export_recipe', recipe_id=recipe.recipe_ID, type='share') }}">Share Recipe</a>
+        <a href="{{ url_for('export_recipe', recipe_id=recipe.recipe_ID, type='download') }}">Download Recipe</a>
+
     </main>
 </body>
 </html>

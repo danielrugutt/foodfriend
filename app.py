@@ -1,16 +1,17 @@
 from flask import Flask, redirect, render_template, request, make_response, session, abort, jsonify, url_for
-import secrets
 from functools import wraps
-import firebase_admin
 from firebase_admin import credentials, firestore, auth
 from datetime import timedelta
-import os
 from dotenv import load_dotenv
+from typing import List
+import secrets
+import os
+import sys
+import firebase_admin
 from classes.DietaryPreference import DietaryPreference
 from classes.Search import Search
 from classes.Recipe import *
-import sys
-from typing import List
+from classes.Exporter import *
 
 load_dotenv()
 
@@ -81,19 +82,16 @@ def search():
     user_search=Search(user_diet)
     query="naan"
     response=user_search.search(query)
-    for recipe in response['results']:
-        print(f"Recipe Name: {recipe["title"]} Recipe ID:{recipe["id"]}",file=sys.stderr)
+
+    if 'results' in response:
+        for recipe in response['results']:
+            print(f"Recipe Name: {recipe["title"]} Recipe ID:{recipe["id"]}",file=sys.stderr)
+    else:
+        print("No results found!")
+
     return render_template("search_results.html", results=response,search_query=query)
 
-# @app.route('/export')
-# def export():
-#     shareExporter = ShareExporter();
-#     downloadExporter = DownloadExporter();
-#
-#     shareExporter(
-
-@app.route('/recipe')
-def recipe():
+def get_recipe_by_id(recipe_id):
     recipe =  (
         RecipeBuilder(235908235)
         .set_title("Spaghetti")
@@ -107,7 +105,28 @@ def recipe():
         .set_intolerances(["Gluten"])
         .build()
     )
+
+    return recipe
+
+@app.route('/recipe/<int:recipe_id>')
+def recipe(recipe_id):
+    recipe = get_recipe_by_id(recipe_id)
     return render_template("recipe.html", recipe=recipe)
+
+@app.route('/recipe/<int:recipe_id>/export', methods=['GET'])
+def export_recipe(recipe_id):
+    recipe = get_recipe_by_id(recipe_id)
+
+    export_type = request.args.get('type')
+
+    if export_type == 'share':
+        exporter = ShareExporter(recipe)
+    elif export_type == 'download':
+        exporter = DownloadExporter(recipe)
+    else:
+        return "Invalid export type", 400
+
+    return exporter.exportRecipe()
 
 @app.route('/login')
 def login():
@@ -140,8 +159,6 @@ def logout():
 
 
 
-
-
 ##############################################
 """ Private Routes (Require authorization) """
 
@@ -150,8 +167,6 @@ def logout():
 def dashboard():
 
     return render_template('dashboard.html')
-
-
 
 
 

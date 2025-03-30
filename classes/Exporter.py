@@ -16,7 +16,7 @@ class Exporter(ABC):
 
 
 class ShareExporter(Exporter):
-    def __init__(self, recipe, outgoing_email):
+    def __init__(self, recipe):
         self.api_key=os.getenv("SPOON_API_KEY")
         self.outgoing_email = outgoing_email
         self.recipe = recipe
@@ -32,7 +32,7 @@ class ShareExporter(Exporter):
 
 
 class DownloadExporter(Exporter):
-     def __init__(self, recipe):
+    def __init__(self, recipe):
         self.api_key=os.getenv("SPOON_API_KEY")
         self.recipe = recipe
 
