@@ -6,6 +6,9 @@ class RecipeIngredient:
         self.quantity = quantity
         self.unit = unit
 
+    def __str__(self):
+        return self.quantity + " " + self.unit + " of " + self.name
+
 class Nutrition:
     # THIS IS MISSING SO MUCH STUFF but it's just a placeholder for now
     def __init__(self, calories: int, protein: float, carbs: float, fats: float):
