@@ -72,3 +72,5 @@ node_modules/
 firebase-auth.json
 .env
 venv
+
+__pycache__/
