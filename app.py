@@ -6,9 +6,12 @@ from firebase_admin import credentials, firestore, auth
 from datetime import timedelta
 import os
 from dotenv import load_dotenv
-from DietaryPreference import DietaryPreference
-from Search import Search
+from classes.DietaryPreference import DietaryPreference
+from classes.Search import Search
+from classes.Recipe import *
 import sys
+from typing import List
+
 load_dotenv()
 
 app = Flask(__name__)
@@ -82,6 +85,30 @@ def search():
         print(f"Recipe Name: {recipe["title"]} Recipe ID:{recipe["id"]}",file=sys.stderr)
     return render_template("search_results.html", results=response,search_query=query)
 
+# @app.route('/export')
+# def export():
+#     shareExporter = ShareExporter();
+#     downloadExporter = DownloadExporter();
+#
+#     shareExporter(
+
+@app.route('/recipe')
+def recipe():
+    recipe =  (
+        RecipeBuilder(235908235)
+        .set_title("Spaghetti")
+        .set_ingredients([RecipeIngredient("Spaghetti", 200, "g"), RecipeIngredient("Ground Beef", 300, "g")])
+        .set_steps(["Boil pasta", "Cook beef", "Mix together"])
+        .set_cooking_time(30)
+        .set_nutrition_info(Nutrition(600, 25, 75, 20))
+        .set_servings(2)
+        .set_cuisine("Italian")
+        .set_diet(["Omnivore"])
+        .set_intolerances(["Gluten"])
+        .build()
+    )
+    return render_template("recipe.html", recipe=recipe)
+
 @app.route('/login')
 def login():
     if 'user' in session:
@@ -110,6 +137,9 @@ def logout():
     response = make_response(redirect(url_for('login')))
     response.set_cookie('session', '', expires=0)  # Optionally clear the session cookie
     return response
+
+
+
 
 
 ##############################################
