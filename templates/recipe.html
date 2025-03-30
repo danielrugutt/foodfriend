@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
+  <title>{{recipe.title}}</title>
+  </head>
+
+
+<body>
+    {% include 'navbar_private.html' %}
+    <main>
+        <h1>{{ recipe.title }}</h1>
+        <p><strong>Cuisine:</strong> {{ recipe.cuisine }}</p>
+        <p><strong>Cooking Time:</strong> {{ recipe.cooking_time }} minutes</p>
+        <p><strong>Servings:</strong> {{ recipe.servings }}</p>
+        <p><strong>Diet:</strong> {{ ", ".join(recipe.diet) }}</p>
+        <p><strong>Intolerances:</strong> {{ ", ".join(recipe.intolerances) }}</p>
+        <p><strong>Average Rating:</strong> {{ recipe.average_rating }}</p>
+
+        <h2>Ingredients</h2>
+        <ul>
+            {% for ingredient in recipe.ingredients %}
+                <li>{{ ingredient.quantity }} {{ ingredient.unit }} of {{ ingredient.name }}</li>
+            {% endfor %}
+        </ul>
+
+        <h2>Steps</h2>
+        <ol>
+            {% for step in recipe.steps %}
+                <li>{{ step }}</li>
+            {% endfor %}
+        </ol>
+
+        <h2>Nutrition Info</h2>
+        <p><strong>Calories:</strong> {{ recipe.nutrition_info.calories }}</p>
+        <p><strong>Protein:</strong> {{ recipe.nutrition_info.protein }}g</p>
+        <p><strong>Carbs:</strong> {{ recipe.nutrition_info.carbs }}g</p>
+        <p><strong>Fats:</strong> {{ recipe.nutrition_info.fats }}g</p>
+    </main>
+</body>
+</html>

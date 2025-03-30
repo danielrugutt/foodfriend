@@ -1,5 +1,5 @@
 import requests
-import DietaryPreference
+from .DietaryPreference import DietaryPreference
 import os
 
 class Search:
