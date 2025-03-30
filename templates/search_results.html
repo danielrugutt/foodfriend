@@ -14,11 +14,14 @@
 
 <body>
     {% include 'navbar_private.html' %}
-    <h1>Search Results for {{search_query}}</h1>
-    <ul>
-    {% for item in results['results'] %}
-        <li> Recipe: {{item['title']}} ID: {{item['id']}} </li>
-    {% endfor %}
-    </ul>
+
+    <main>
+        <h1>Search Results for {{search_query}}</h1>
+        <ul>
+        {% for item in results['results'] %}
+            <li> Recipe: {{item['title']}} ID: {{item['id']}} </li>
+        {% endfor %}
+        </ul>
+    </main>
 </body>
 </html>
