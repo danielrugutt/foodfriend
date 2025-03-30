@@ -76,12 +76,17 @@ def authorize():
 def home():
     return render_template('home.html')
 
-@app.route('/search')
+@app.route('/search', methods=['GET', 'POST'])
 def search():
+    search_query = None
+    if request.method == 'POST':
+        search_query = request.form.get('search_query') # For POST requests
+    elif request.method == 'GET':
+         search_query = request.args.get('search_query') # For GET requests
+    #read from seach bar, search bar is what directs to /search
     user_diet=DietaryPreference("greek","paprika","200","Peanut","vegetarian")
     user_search=Search(user_diet)
-    query="naan"
-    response=user_search.search(query)
+    response=user_search.search(search_query)
 
     if 'results' in response:
         for recipe in response['results']:
@@ -89,7 +94,7 @@ def search():
     else:
         print("No results found!")
 
-    return render_template("search_results.html", results=response,search_query=query)
+    return render_template("search_results.html", results=response,search_query=search_query)
 
 def get_recipe_by_id(recipe_id):
     recipe =  (
