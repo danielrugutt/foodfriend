@@ -26,17 +26,6 @@
     "indexes": "firestore.indexes.json"
   },
   "hosting": {
-    "public": "static",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
-    "rewrites": [
-      {
-        "source": "**",
-        "destination": "https://foodfriend-service-580311697199.us-central1.run.app"
-      }
-    ]
+    "public": "static"
   }
 }

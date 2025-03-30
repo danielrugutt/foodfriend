@@ -213,6 +213,7 @@ function loginUser(user, idToken) {
         if (response.ok) {
             window.location.href = '/dashboard';
         } else {
+            console.log(response.json)
             console.error('Failed to login');
             // Handle errors here
         }
