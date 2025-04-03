@@ -27,6 +27,12 @@
   },
   "hosting": {
     "public": "static",
-    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"]
+    "ignore": [
+                "firebase.json", 
+                "**/.*", 
+                "**/node_modules/**", 
+                "firebase-config.js", 
+                "login-auth.js"
+    ]
   }
 }
