@@ -15,6 +15,8 @@ document.addEventListener("DOMContentLoaded", function () {
                         <a id="sign-out-btn" href="#">Logout</a>
                     </div>
                 </div>
+                <!-- Placeholder for user email -->
+                <span id="user-email"></span> 
             </div>
         </div>
     `;

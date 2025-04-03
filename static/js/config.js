@@ -1,7 +1,10 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-import { getAuth, 
-         GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+import { getAuth, createUserWithEmailAndPassword, 
+         signInWithEmailAndPassword, signOut, 
+         onAuthStateChanged, sendPasswordResetEmail,
+         GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+
 
 const firebaseConfig = {
   apiKey: "AIzaSyCiRNR5N7xNoOJcDHaq-k0fEoMCfbhM5p4",
@@ -13,6 +16,9 @@ const firebaseConfig = {
   measurementId: "G-6DL6V70QM3"
 };
 
+document.addEventListener("DOMContentLoaded", function() {
+
+
   // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -20,7 +26,6 @@ const provider = new GoogleAuthProvider();
 
 const db = getFirestore(app);
 
-export { auth, provider, db };
 
 // URL variables
 const url               = window.location.href;
@@ -38,6 +43,8 @@ onAuthStateChanged(auth, (user) => {
         // redirect to dashboard when logged in, but in a signin/ signup location
         if (url == loginURL || url == forgotPasswordURL || url == signupURL)
             window.location.replace(dashboardURL);
+
+
     }
     else {
         // disallow privileged access to users that aren't signed in
@@ -83,7 +90,7 @@ function authSignInWithEmail() {
     signInWithEmailAndPassword(auth, email, password)
     .then(() => {
         // Signed in 
-        location.window.replace(dashboardURL);
+        window.location.replace(dashboardURL);
     })
     .catch((error) => {
         const errorCode = error.code;
@@ -210,3 +217,21 @@ function clearAuthFields() {
 	clearInputField(emailInputEl)
 	clearInputField(passwordInputEl)
 }
+
+
+/* === Firestore Function === */
+
+async function addNewUserToFirestore(user) {
+    try {
+        const docRef = await addDoc(collection(db, "users"), {
+            uid: user.uid,
+            email: user.email,
+            createdAt: new Date(),
+        });
+        console.log("Document written with ID: ", docRef.id);
+    } catch (e) {
+        console.error("Error adding document: ", e);
+    }
+}
+// end of DOM event listener
+});
