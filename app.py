@@ -1,4 +1,5 @@
 from flask import Flask, redirect, render_template, request, make_response, session, abort, jsonify, url_for
+# from flask_sqlalchemy import SQLAlchemy
 from functools import wraps
 from firebase_admin import credentials, firestore, auth
 from datetime import timedelta
@@ -8,11 +9,13 @@ from classes.DietaryPreference import DietaryPreference
 from classes.Search import Search
 from classes.Recipe import *
 from classes.Exporter import *
+from database import *
 import secrets
 import os
 import sys
 import firebase_admin
-import oracledb
+import sqlite3
+import json
 
 load_dotenv()
 
@@ -31,27 +34,32 @@ cred = credentials.Certificate("firebase-auth.json")
 firebase_admin.initialize_app(cred)
 db = firestore.client()
 
-# Oracle setup
-oracle_connection = oracledb.connect (
-    user="IT326T06",
-    password = os.getenv('ORACLE_PASSWORD'),
-    dsn="""(DESCRIPTION=
-    (ADDRESS=(PROTOCOL=TCP)(HOST=10.110.10.90)(PORT=1521))
-    (CONNECT_DATA=(SID=oracle)))""")
+app = Flask(__name__)
 
-cursor = oracle_connection.cursor()
-cursor.execute("SELECT 'Connected' FROM dual")
-print(cursor.fetchone()[0], "to the Oracle database!")
+initialize_database()
 
+taratorRecipe = (
+    RecipeBuilder("Tarator")
+    .set_ingredients([RecipeIngredient("Cucumber", 1,), RecipeIngredient("Walnut", 0.25, "cup"), RecipeIngredient("Yogurt", 0.5, "tub")])
+    .set_steps(["Make yogurt broth", "Cut cucumber", "Add walnuts, dill, and salt"])
+    .set_cooking_time(15)
+    .set_nutrition_info(Nutrition(600, 25, 75, 20))
+    .set_servings(4)
+    .set_cuisine("Bulgarian")
+    .set_diet(["Vegetarian"])
+    .set_intolerances(["Dairy"])
+    .build()
+)
+
+insert_recipe(taratorRecipe)
 
 ########################################
 """ Authentication and Authorization """
 
-# Decorator for routes that require authentication
+# Add this to any request needing authentication
 def auth_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # Check if user is authenticated
         if 'user' not in session:
             return redirect(url_for('login'))
         
@@ -106,31 +114,21 @@ def search():
 
     return render_template("search_results.html", results=response,search_query=search_query)
 
-def get_recipe_by_id(recipe_id):
-    recipe =  (
-        RecipeBuilder(235908235)
-        .set_title("Spaghetti")
-        .set_ingredients([RecipeIngredient("Spaghetti", 200, "g"), RecipeIngredient("Ground Beef", 300, "g")])
-        .set_steps(["Boil pasta", "Cook beef", "Mix together"])
-        .set_cooking_time(30)
-        .set_nutrition_info(Nutrition(600, 25, 75, 20))
-        .set_servings(2)
-        .set_cuisine("Italian")
-        .set_diet(["Omnivore"])
-        .set_intolerances(["Gluten"])
-        .build()
-    )
-
-    return recipe
+@app.route('/viewrecipes')
+def list_recipes():
+    recipes = get_all_recipes()
+    return jsonify(recipes), 200
 
 @app.route('/recipe/<int:recipe_id>')
 def recipe(recipe_id):
-    recipe = get_recipe_by_id(recipe_id)
+    recipe = get_recipe(recipe_id)
+    if recipe is None:
+        return "Recipe not found", 404
     return render_template("recipe.html", recipe=recipe)
 
 @app.route('/recipe/<int:recipe_id>/export', methods=['GET'])
 def export_recipe(recipe_id):
-    recipe = get_recipe_by_id(recipe_id)
+    recipe = get_recipe(recipe_id)
 
     export_type = request.args.get('type')
 
@@ -173,17 +171,13 @@ def logout():
     return response
 
 
-
 ##############################################
 """ Private Routes (Require authorization) """
 
 @app.route('/dashboard')
 @auth_required
 def dashboard():
-
     return render_template('dashboard.html')
-
-
 
 
 if __name__ == '__main__':

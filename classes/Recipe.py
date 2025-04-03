@@ -1,12 +1,15 @@
 from typing import List
 
 class RecipeIngredient:
-    def __init__(self, name: str, quantity: int, unit: str):
+    # units not always needed - eggs, for example
+    def __init__(self, name: str, quantity: float, unit: str = None):
         self.name = name
         self.quantity = quantity
         self.unit = unit
 
     def __str__(self):
+        if self.unit is None:
+            return self.quantity + " " + self.name
         return self.quantity + " " + self.unit + " of " + self.name
 
 class Nutrition:
@@ -18,10 +21,9 @@ class Nutrition:
         self.fats = fats
 
 class Recipe:
-    def __init__(self, recipe_ID: int, title: str, ingredients: List[RecipeIngredient], steps: List[str],
+    def __init__(self, title: str, ingredients: List[RecipeIngredient], steps: List[str],
                  cooking_time: int, nutrition_info: Nutrition, servings: int, cuisine: str,
                  diet: List[str], intolerances: List[str]):
-        self.recipe_ID = recipe_ID
         self.title = title
         self.ingredients = ingredients
         self.steps = steps
@@ -33,9 +35,8 @@ class Recipe:
         self.intolerances = intolerances
 
 class RecipeBuilder:
-    def __init__(self, recipe_ID):
-        self.recipe_ID = recipe_ID
-        self.title = None
+    def __init__(self, title):
+        self.title = title
         self.ingredients = []
         self.steps = []
         self.cooking_time = 0
@@ -44,11 +45,6 @@ class RecipeBuilder:
         self.cuisine = None
         self.diet = []
         self.intolerances = []
-        self.average_rating = 0.0
-
-    def set_title(self, title):
-        self.title = title
-        return self
 
     def set_ingredients(self, ingredients: List[RecipeIngredient]):
         self.ingredients = ingredients
@@ -83,7 +79,7 @@ class RecipeBuilder:
         return self
 
     def build(self):
-        return Recipe(self.recipe_ID, self.title, self.ingredients, self.steps,
+        return Recipe(self.title, self.ingredients, self.steps,
                       self.cooking_time, self.nutrition_info, self.servings,
                       self.cuisine, self.diet, self.intolerances)
 
