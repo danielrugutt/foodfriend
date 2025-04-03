@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     <div class="dropdown-content">
                         <a href="#news1">Profile</a>
                         <a href="#news2">Settings</a>
-                        <a id="sign-out-btn" href="{{ url_for('logout') }}">Logout</a>
+                        <a id="sign-out-btn" href="#">Logout</a>
                     </div>
                 </div>
             </div>
