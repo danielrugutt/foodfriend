@@ -23,12 +23,6 @@ class Search:
         return response.json()
 
 
-
-
-
-
-
-
 #for recipe in response_json['results']:
 #    print(f"Recipe Name: {recipe["title"]} Recipe ID:{recipe["id"]}")
 
