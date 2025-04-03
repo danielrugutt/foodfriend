@@ -1,4 +1,5 @@
 from flask import Flask, redirect, render_template, request, make_response, session, abort, jsonify, url_for
+# from flask_sqlalchemy import SQLAlchemy
 from functools import wraps
 from firebase_admin import credentials, firestore, auth
 from datetime import timedelta
@@ -8,11 +9,13 @@ from classes.DietaryPreference import DietaryPreference
 from classes.Search import Search
 from classes.Recipe import *
 from classes.Exporter import *
+from database import *
 import secrets
 import os
 import sys
 import firebase_admin
-import oracledb
+import sqlite3
+import json
 
 load_dotenv()
 
@@ -31,27 +34,28 @@ cred = credentials.Certificate("firebase-auth.json")
 firebase_admin.initialize_app(cred)
 db = firestore.client()
 
-# Oracle setup
-oracle_connection = oracledb.connect (
-    user="IT326T06",
-    password = os.getenv('ORACLE_PASSWORD'),
-    dsn="""(DESCRIPTION=
-    (ADDRESS=(PROTOCOL=TCP)(HOST=10.110.10.90)(PORT=1521))
-    (CONNECT_DATA=(SID=oracle)))""")
+app = Flask(__name__)
 
-cursor = oracle_connection.cursor()
-cursor.execute("SELECT 'Connected' FROM dual")
-print(cursor.fetchone()[0], "to the Oracle database!")
-
+initialize_database()
+insert_recipe({
+    "title": "Spaghetti Carbonara",
+    "cookingTime": 20,
+    "servings": 2,
+    "cuisine": "Italian",
+    "nutrition": {"calories": 450, "totalFat": 20},
+    "steps": ["Boil pasta", "Cook bacon", "Mix everything together"],
+    "diet": ["Gluten"],
+    "intolerances": ["Dairy"]
+})
+print(get_all_recipes())
 
 ########################################
 """ Authentication and Authorization """
 
-# Decorator for routes that require authentication
+# Add this to any request needing authentication
 def auth_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # Check if user is authenticated
         if 'user' not in session:
             return redirect(url_for('login'))
         
@@ -123,6 +127,11 @@ def get_recipe_by_id(recipe_id):
 
     return recipe
 
+@app.route('/viewrecipes')
+def list_recipes():
+    recipes = get_all_recipes()
+    return jsonify(recipes), 200
+
 @app.route('/recipe/<int:recipe_id>')
 def recipe(recipe_id):
     recipe = get_recipe_by_id(recipe_id)
@@ -173,17 +182,13 @@ def logout():
     return response
 
 
-
 ##############################################
 """ Private Routes (Require authorization) """
 
 @app.route('/dashboard')
 @auth_required
 def dashboard():
-
     return render_template('dashboard.html')
-
-
 
 
 if __name__ == '__main__':

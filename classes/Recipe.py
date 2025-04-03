@@ -44,7 +44,6 @@ class RecipeBuilder:
         self.cuisine = None
         self.diet = []
         self.intolerances = []
-        self.average_rating = 0.0
 
     def set_title(self, title):
         self.title = title
