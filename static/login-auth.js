@@ -3,7 +3,7 @@ import { auth, provider } from "./firebase-config.js";
 import { createUserWithEmailAndPassword,
          signInWithEmailAndPassword,
          signInWithPopup,
-         sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+         sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
 
 
 
