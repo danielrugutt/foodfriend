@@ -24,7 +24,7 @@ CREATE TABLE Recipe
     diet BLOB,
     intolerances BLOB
     -- recipeingredients and nutrition have their own tables
-)
+);
 
 -- done
 -- cannot be called "user" unfortunately
@@ -34,7 +34,7 @@ CREATE TABLE UserData
     name TEXT NOT NULL,
     email TEXT2 NOT NULL
     -- recipelist, plannedday, and dietarypreferences have their own tables
-)
+);
 
 -- done
 CREATE TABLE Nutrition
@@ -50,14 +50,14 @@ CREATE TABLE Nutrition
     recipe_id INTEGER NOT NULL,
     FOREIGN KEY (recipe_id) REFERENCES Recipe(id) ON DELETE CASCADE,
     PRIMARY KEY (recipe_id)
-)
+);
 
 CREATE TABLE Ingredient
 (
     id INTEGER NOT NULL AUTOINCREMENT,
     name TEXT NOT NULL,
     type ?????
-)
+);
 
 -- done
 CREATE TABLE RecipeIngredient
@@ -69,14 +69,14 @@ CREATE TABLE RecipeIngredient
     FOREIGN KEY (recipe_id) REFERENCES Recipe(id) ON DELETE CASCADE,
     FOREIGN KEY (ingredient_id) REFERENCES Ingredient(id) ON DELETE CASCADE,
     PRIMARY KEY (recipe_id, ingredient_id)
-)
+);
 
 -- done
 CREATE TABLE PlannedDay
 (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     calendar_day DATE NOT NULL UNIQUE
-)
+);
 
 -- done
 CREATE TABLE PlannedMeal
@@ -90,7 +90,7 @@ CREATE TABLE PlannedMeal
     FOREIGN KEY (recipe_id) REFERENCES Recipe(id) ON DELETE CASCADE,
     FOREIGN KEY (planned_day_id) REFERENCES PlannedDay(id) ON DELETE CASCADE,
     PRIMARY KEY (plannedDay)
-)
+);
 
 
 CREATE TABLE DietaryPreference
@@ -99,7 +99,7 @@ CREATE TABLE DietaryPreference
 
     FOREIGN KEY (user_id) REFERENCES UserData(id) ON DELETE CASCADE,
     PRIMARY KEY(user_id)
-)
+);
 
 -- done
 CREATE TABLE RecipeList
@@ -110,4 +110,4 @@ CREATE TABLE RecipeList
     FOREIGN KEY (recipe_id) REFERENCES Recipe(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES UserData(id) ON DELETE CASCADE,
     PRIMARY KEY(user_id, recipe_id)
-)
+);

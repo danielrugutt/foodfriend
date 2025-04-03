@@ -37,15 +37,15 @@
             {% endfor %}
         </ol>
 
-        <h2>Nutrition Info</h2>
+        {# <h2>Nutrition Info</h2>
         <p><strong>Calories:</strong> {{ recipe.nutrition_info.calories }}</p>
         <p><strong>Protein:</strong> {{ recipe.nutrition_info.protein }}g</p>
         <p><strong>Carbs:</strong> {{ recipe.nutrition_info.carbs }}g</p>
-        <p><strong>Fats:</strong> {{ recipe.nutrition_info.fats }}g</p>
+        <p><strong>Fats:</strong> {{ recipe.nutrition_info.fats }}g</p> #}
 
         <!--this does not actually work-->
-        <a href="{{ url_for('export_recipe', recipe_id=recipe.recipe_ID, type='share') }}">Share Recipe</a>
-        <a href="{{ url_for('export_recipe', recipe_id=recipe.recipe_ID, type='download') }}">Download Recipe</a>
+        <a href="{{ url_for('export_recipe', recipe_id=recipe.id, type='share') }}">Share Recipe</a>
+        <a href="{{ url_for('export_recipe', recipe_id=recipe.id, type='download') }}">Download Recipe</a>
 
     </main>
 </body>

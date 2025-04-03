@@ -37,17 +37,21 @@ db = firestore.client()
 app = Flask(__name__)
 
 initialize_database()
-insert_recipe({
-    "title": "Spaghetti Carbonara",
-    "cookingTime": 20,
-    "servings": 2,
-    "cuisine": "Italian",
-    "nutrition": {"calories": 450, "totalFat": 20},
-    "steps": ["Boil pasta", "Cook bacon", "Mix everything together"],
-    "diet": ["Gluten"],
-    "intolerances": ["Dairy"]
-})
-print(get_all_recipes())
+
+taratorRecipe = (
+    RecipeBuilder("Tarator")
+    .set_ingredients([RecipeIngredient("Cucumber", 1,), RecipeIngredient("Walnut", 0.25, "cup"), RecipeIngredient("Yogurt", 0.5, "tub")])
+    .set_steps(["Make yogurt broth", "Cut cucumber", "Add walnuts, dill, and salt"])
+    .set_cooking_time(15)
+    .set_nutrition_info(Nutrition(600, 25, 75, 20))
+    .set_servings(4)
+    .set_cuisine("Bulgarian")
+    .set_diet(["Vegetarian"])
+    .set_intolerances(["Dairy"])
+    .build()
+)
+
+insert_recipe(taratorRecipe)
 
 ########################################
 """ Authentication and Authorization """
@@ -110,23 +114,6 @@ def search():
 
     return render_template("search_results.html", results=response,search_query=search_query)
 
-def get_recipe_by_id(recipe_id):
-    recipe =  (
-        RecipeBuilder(235908235)
-        .set_title("Spaghetti")
-        .set_ingredients([RecipeIngredient("Spaghetti", 200, "g"), RecipeIngredient("Ground Beef", 300, "g")])
-        .set_steps(["Boil pasta", "Cook beef", "Mix together"])
-        .set_cooking_time(30)
-        .set_nutrition_info(Nutrition(600, 25, 75, 20))
-        .set_servings(2)
-        .set_cuisine("Italian")
-        .set_diet(["Omnivore"])
-        .set_intolerances(["Gluten"])
-        .build()
-    )
-
-    return recipe
-
 @app.route('/viewrecipes')
 def list_recipes():
     recipes = get_all_recipes()
@@ -134,12 +121,14 @@ def list_recipes():
 
 @app.route('/recipe/<int:recipe_id>')
 def recipe(recipe_id):
-    recipe = get_recipe_by_id(recipe_id)
+    recipe = get_recipe(recipe_id)
+    if recipe is None:
+        return "Recipe not found", 404
     return render_template("recipe.html", recipe=recipe)
 
 @app.route('/recipe/<int:recipe_id>/export', methods=['GET'])
 def export_recipe(recipe_id):
-    recipe = get_recipe_by_id(recipe_id)
+    recipe = get_recipe(recipe_id)
 
     export_type = request.args.get('type')
 
