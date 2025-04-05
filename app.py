@@ -1,23 +1,26 @@
 from flask import Flask, redirect, render_template, request, make_response, session, abort, jsonify, url_for
+# from flask_sqlalchemy import SQLAlchemy
 from functools import wraps
 from firebase_admin import credentials, firestore, auth
 from datetime import timedelta
 from dotenv import load_dotenv
 from typing import List
-import secrets
-import os
-import sys
-import firebase_admin
 from classes.DietaryPreference import DietaryPreference
 from classes.Search import Search
 from classes.Recipe import *
 from classes.Exporter import *
+from database import *
+import secrets
+import os
+import sys
+import firebase_admin
+import sqlite3
+import json
 
 load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
-# template_dir = os.path.abspath('public/templates')
 
 # Configure session cookie settings
 app.config['SESSION_COOKIE_SECURE'] = True  # Ensure cookies are sent over HTTPS
@@ -26,22 +29,37 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=1)  # Adjust session e
 app.config['SESSION_REFRESH_EACH_REQUEST'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Can be 'Strict', 'Lax', or 'None'
 
-
 # Firebase Admin SDK setup
 cred = credentials.Certificate("firebase-auth.json")
 firebase_admin.initialize_app(cred)
 db = firestore.client()
 
+app = Flask(__name__)
 
+initialize_database()
+
+taratorRecipe = (
+    RecipeBuilder("Tarator")
+    .set_ingredients([RecipeIngredient("Cucumber", 1,), RecipeIngredient("Walnut", 0.25, "cup"), RecipeIngredient("Yogurt", 0.5, "tub")])
+    .set_steps(["Make yogurt broth", "Cut cucumber", "Add walnuts, dill, and salt"])
+    .set_cooking_time(15)
+    .set_nutrition_info(Nutrition(600, 25, 75, 20))
+    .set_servings(4)
+    .set_cuisine("Bulgarian")
+    .set_diet(["Vegetarian"])
+    .set_intolerances(["Dairy"])
+    .build()
+)
+
+insert_recipe(taratorRecipe)
 
 ########################################
 """ Authentication and Authorization """
 
-# Decorator for routes that require authentication
+# Add this to any request needing authentication
 def auth_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # Check if user is authenticated
         if 'user' not in session:
             return redirect(url_for('login'))
         
@@ -76,12 +94,17 @@ def authorize():
 def home():
     return render_template('home.html')
 
-@app.route('/search')
+@app.route('/search', methods=['GET', 'POST'])
 def search():
+    search_query = None
+    if request.method == 'POST':
+        search_query = request.form.get('search_query') # For POST requests
+    elif request.method == 'GET':
+         search_query = request.args.get('search_query') # For GET requests
+    #read from seach bar, search bar is what directs to /search
     user_diet=DietaryPreference("greek","paprika","200","Peanut","vegetarian")
     user_search=Search(user_diet)
-    query="naan"
-    response=user_search.search(query)
+    response=user_search.search(search_query)
 
     if 'results' in response:
         for recipe in response['results']:
@@ -89,33 +112,23 @@ def search():
     else:
         print("No results found!")
 
-    return render_template("search_results.html", results=response,search_query=query)
+    return render_template("search_results.html", results=response,search_query=search_query)
 
-def get_recipe_by_id(recipe_id):
-    recipe =  (
-        RecipeBuilder(235908235)
-        .set_title("Spaghetti")
-        .set_ingredients([RecipeIngredient("Spaghetti", 200, "g"), RecipeIngredient("Ground Beef", 300, "g")])
-        .set_steps(["Boil pasta", "Cook beef", "Mix together"])
-        .set_cooking_time(30)
-        .set_nutrition_info(Nutrition(600, 25, 75, 20))
-        .set_servings(2)
-        .set_cuisine("Italian")
-        .set_diet(["Omnivore"])
-        .set_intolerances(["Gluten"])
-        .build()
-    )
-
-    return recipe
+@app.route('/viewrecipes')
+def list_recipes():
+    recipes = get_all_recipes()
+    return jsonify(recipes), 200
 
 @app.route('/recipe/<int:recipe_id>')
 def recipe(recipe_id):
-    recipe = get_recipe_by_id(recipe_id)
+    recipe = get_recipe(recipe_id)
+    if recipe is None:
+        return "Recipe not found", 404
     return render_template("recipe.html", recipe=recipe)
 
 @app.route('/recipe/<int:recipe_id>/export', methods=['GET'])
 def export_recipe(recipe_id):
-    recipe = get_recipe_by_id(recipe_id)
+    recipe = get_recipe(recipe_id)
 
     export_type = request.args.get('type')
 
@@ -158,19 +171,15 @@ def logout():
     return response
 
 
-
 ##############################################
 """ Private Routes (Require authorization) """
 
 @app.route('/dashboard')
 @auth_required
 def dashboard():
-
     return render_template('dashboard.html')
 
 
-
-
 if __name__ == '__main__':
-    app.run(debug=True)
-    # app.run(host='0.0.0.0', port=8080)
+    # app.run(debug=True)
+    app.run(host='0.0.0.0', port=8080)
