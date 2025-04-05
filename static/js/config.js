@@ -65,6 +65,7 @@ const passwordInputEl          = document.getElementById("password-input")
 const signInButtonEl           = document.getElementById("sign-in-btn")
 const signOutButtonEl          = document.getElementById("sign-out-btn");
 const createAccountButtonEl    = document.getElementById("create-account-btn")
+const signupFormEl               = document.getElementById("signup-form")
 const emailForgotPasswordEl    = document.getElementById("email-forgot-password")
 const forgotPasswordButtonEl   = document.getElementById("forgot-password-btn")
 
@@ -77,9 +78,13 @@ const errorMsgGoogleSignIn     = document.getElementById("google-signin-error-me
 signInWithGoogleButtonEl && signInWithGoogleButtonEl.addEventListener("click", authSignInWithGoogle);
 signUpWithGoogleButtonEl && signUpWithGoogleButtonEl.addEventListener("click", authSignInWithGoogle);
 signInButtonEl           && signInButtonEl.addEventListener("click", authSignInWithEmail);
-createAccountButtonEl    && createAccountButtonEl.addEventListener("click", authCreateAccountWithEmail);
+// createAccountButtonEl    && createAccountButtonEl.addEventListener("click", authCreateAccountWithEmail);
 forgotPasswordButtonEl   && forgotPasswordButtonEl.addEventListener("click", resetPassword);
 signOutButtonEl          && signOutButtonEl.addEventListener('click', logout);
+signupFormEl               && signupFormEl.addEventListener("submit", (e) => {
+    e.preventDefault();
+    authCreateAccountWithEmail();
+});
 
 
 /* === Main Code === */
