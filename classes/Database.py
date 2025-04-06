@@ -1,6 +1,7 @@
 import sqlite3
 import json
 import os
+from .Recipe import Recipe, RecipeBuilder, RecipeIngredient
 
 
 class Singleton(type):
@@ -75,7 +76,7 @@ class Database(metaclass=Singleton):
             row = cursor.fetchone()
 
             if row:
-                return {
+                recipe_dict =  {
                     "id": row["id"],
                     "title": row["title"],
                     "cuisine": row["cuisine"],
@@ -86,6 +87,8 @@ class Database(metaclass=Singleton):
                     "steps": json.loads(row["steps"]),
                     "ingredients": self.get_recipe_ingredients(recipe_id),
                 }
+                return self.construct_recipe_from_dict(recipe_dict)
+
             else:
                 return None
 
@@ -95,3 +98,27 @@ class Database(metaclass=Singleton):
             cursor = connection.cursor()
             cursor.execute("SELECT * FROM TestIngredient WHERE recipe_id = ?", (recipe_id,))
             return [dict(row) for row in cursor.fetchall()]
+
+    def construct_recipe_from_dict(self, dictionary):
+        builder = RecipeBuilder(dictionary["title"])
+
+        ingredientList = []
+        for ingredient in dictionary["ingredients"]:
+            ingredientList.append(RecipeIngredient(ingredient["name"], ingredient["quantity"], ingredient["unit"]))
+
+
+        recipe = (
+            builder
+            .set_ID(dictionary["id"])
+            .set_ingredients(ingredientList)
+            .set_steps(dictionary["steps"])
+            .set_cooking_time(dictionary["cooking_time"])
+            .set_servings(dictionary["servings"])
+            .set_cuisine(dictionary["cuisine"])
+            .set_diet(dictionary["diet"])
+            .set_intolerances(dictionary["intolerances"])
+            .build()
+        )
+
+        return recipe
+

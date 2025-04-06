@@ -23,7 +23,7 @@ class Nutrition:
 class Recipe:
     def __init__(self, title: str, ingredients: List[RecipeIngredient], steps: List[str],
                  cooking_time: int, nutrition_info: Nutrition, servings: int, cuisine: str,
-                 diet: List[str], intolerances: List[str]):
+                 diet: List[str], intolerances: List[str], ID: int):
         self.title = title
         self.ingredients = ingredients
         self.steps = steps
@@ -33,6 +33,7 @@ class Recipe:
         self.cuisine = cuisine
         self.diet = diet
         self.intolerances = intolerances
+        self.ID = ID
 
 class RecipeBuilder:
     def __init__(self, title):
@@ -45,6 +46,7 @@ class RecipeBuilder:
         self.cuisine = None
         self.diet = []
         self.intolerances = []
+        self.ID = 0
 
     def set_ingredients(self, ingredients: List[RecipeIngredient]):
         self.ingredients = ingredients
@@ -78,9 +80,14 @@ class RecipeBuilder:
         self.intolerances = intolerances
         return self
 
+    # only use this when grabbing a recipe from the database! the recipe will have its ID set when being entered into the database, and if this is set then, it will be ignored
+    def set_ID(self, ID: int):
+        self.ID = ID
+        return self
+
     def build(self):
         return Recipe(self.title, self.ingredients, self.steps,
                       self.cooking_time, self.nutrition_info, self.servings,
-                      self.cuisine, self.diet, self.intolerances)
+                      self.cuisine, self.diet, self.intolerances, self.ID)
 
 
