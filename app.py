@@ -132,7 +132,9 @@ def recipe(recipe_id):
 @app.route('/recipe/<int:recipe_id>/export', methods=['GET'])
 def export_recipe(recipe_id):
     recipe = database.get_recipe(recipe_id)
-
+    if recipe is None:
+        recipe=SpoonacularRecipeAdapter(recipe_id)
+        recipe=recipe.standardizeRecipe()
     export_type = request.args.get('type')
 
     if export_type == 'share':

@@ -39,16 +39,16 @@ const signupURL         = window.location.origin + '/signup.html';
 
 // Session Handling
 onAuthStateChanged(auth, (user) => {
-    const userEmailEl = document.getElementById("user-email");
+    // const userEmailEl = document.getElementById("user-email");
     if (user) {
         // redirect to dashboard when logged in, but in a signin/ signup location
         if (url == loginURL || url == forgotPasswordURL || url == signupURL)
             window.location.replace(dashboardURL);
 
         // display welcome to user when logged in at dashboard
-        if (userEmailEl) {
-            userEmailEl.textContent = `Welcome, ${user.email}`;
-        }
+        // if (userEmailEl) {
+            // userEmailEl.textContent = `Welcome, ${user.email}`;
+        // }
     }
     else {
         // disallow privileged access to users that aren't signed in

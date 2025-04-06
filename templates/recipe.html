@@ -16,17 +16,39 @@
     {% include 'navbar_private.html' %}
     <main>
         <h1>{{ recipe.title }}</h1>
-        <p><strong>Cuisine:</strong> {{ recipe.cuisine }}</p>
-        <p><strong>Cooking Time:</strong> {{ recipe.cooking_time }} minutes</p>
-        <p><strong>Servings:</strong> {{ recipe.servings }}</p>
-        <p><strong>Diet:</strong> {{ ", ".join(recipe.diet) }}</p>
-        <p><strong>Intolerances:</strong> {{ ", ".join(recipe.intolerances) }}</p>
-        <p><strong>Average Rating:</strong> {{ recipe.average_rating }}</p>
+            {% if recipe.img_url %}
+            <img src ="{{recipe.img_url}}">
+            {%endif%}
+            
+            {% if recipe.cuisine %}
+            <p><strong>Cuisine:</strong> {{ recipe.cuisine }}</p>
+            {% endif %}
+
+            {% if recipe.cooking_time %}
+            <p><strong>Cooking Time:</strong> {{ recipe.cooking_time }} minutes</p>
+            {% endif %}
+
+            {% if recipe.servings %}
+            <p><strong>Servings:</strong> {{ recipe.servings }}</p>
+            {% endif %}
+
+            {% if recipe.diet %}
+            <p><strong>Diet:</strong> {{ ", ".join(recipe.diet) }}</p>
+            {% endif %}
+
+            {% if recipe.intolerances %}
+            <p><strong>Intolerances:</strong> {{ ", ".join(recipe.intolerances) }}</p>
+            {% endif %}
+
+            {% if recipe.average_rating %}
+            <p><strong>Average Rating:</strong> {{ recipe.average_rating }}</p>
+            {% endif %}
+
 
         <h2>Ingredients</h2>
         <ul>
             {% for ingredient in recipe.ingredients %}
-                <li>{{ ingredient.quantity }} {{ ingredient.unit }} of {{ ingredient.name }}</li>
+                <li>{{ ingredient.quantity }} {{ ingredient.unit }} {{ ingredient.name }}</li>
             {% endfor %}
         </ul>
 
