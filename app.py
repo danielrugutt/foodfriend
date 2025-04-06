@@ -129,12 +129,12 @@ def recipe(recipe_id):
 
 @app.route('/recipe/<int:recipe_id>/export', methods=['GET'])
 def export_recipe(recipe_id):
-    recipe = get_recipe(recipe_id)
+    recipe = database.get_recipe(recipe_id)
 
     export_type = request.args.get('type')
 
     if export_type == 'share':
-        exporter = ShareExporter(recipe)
+        exporter = ShareExporter("fish@water.com", recipe)
     elif export_type == 'download':
         exporter = DownloadExporter(recipe)
     else:

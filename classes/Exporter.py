@@ -4,15 +4,7 @@ from fpdf import FPDF
 
 class Exporter(ABC):
     @abstractmethod
-    def formatRecipe(self):
-        pass
-
-    @abstractmethod
     def exportRecipe(self, destination, recipe):
-        pass
-
-    @abstractmethod
-    def retrieveRecipe(self):
         pass
 
 
@@ -22,27 +14,26 @@ class ShareExporter(Exporter):
         self.outgoing_email = destination
         self.recipe = recipe
 
-    def formatRecipe(self):
+    def exportRecipe(self):
         self.email_subject = (
-            "Cool recipe: ", recipe.title
+            "Cool recipe: ", self.recipe.title
         )
 
         email_text = []
-        email_text.append(recipe.title)
+        email_text.append(self.recipe.title)
         email_text.append("Ingredients needed:")
-        for ingredient in recipe.ingredients:
-            email_text.append(indedrient.str())
+        for ingredient in self.recipe.ingredients:
+            email_text.append(ingredient.str())
 
+        stepNumber = 1
+        for step in self.recipe.steps:
+            email_text.append("Step " + stepNumber + ": " + step)
 
-    def exportRecipe(self):
-        pass
-
-    def retrieveRecipe(self):
-        pass
+        print(email_text)
 
 
 class DownloadExporter(Exporter):
-    def __init__(self, recipe):
+    def __init__(self, destination, recipe):
         self.api_key=os.getenv("SPOON_API_KEY")
         self.recipe = recipe
         self.pdf = None
