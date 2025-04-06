@@ -12,14 +12,20 @@
   </head>
 
 
-<body>
+  <body>
     {% include 'navbar_private.html' %}
 
     <main>
         <h1>Search Results for {{search_query}}</h1>
         <ul>
         {% for item in results['results'] %}
-            <li> Recipe: {{item['title']}} ID: {{item['id']}} </li>
+            <li>
+                <h1>Recipe: {{item['title']}}</h1>
+                <img src ="{{item['image']}}">
+                <a href="/recipe/{{ item['id'] }}">
+                    <button>View Recipe</button>
+                </a>
+            </li>
         {% endfor %}
         </ul>
     </main>

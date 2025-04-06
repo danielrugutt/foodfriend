@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from typing import List
 from classes.DietaryPreference import DietaryPreference
 from classes.Search import Search
+from classes.SpoonacularRecipeAdapter import SpoonacularRecipeAdapter
 from classes.Recipe import *
 from classes.Exporter import *
 from database import *
@@ -97,9 +98,7 @@ def home():
 @app.route('/search', methods=['GET', 'POST'])
 def search():
     search_query = None
-    if request.method == 'POST':
-        search_query = request.form.get('search_query') # For POST requests
-    elif request.method == 'GET':
+    if request.method == 'GET':
          search_query = request.args.get('search_query') # For GET requests
     #read from seach bar, search bar is what directs to /search
     user_diet=DietaryPreference("greek","paprika","200","Peanut","vegetarian")
@@ -123,7 +122,9 @@ def list_recipes():
 def recipe(recipe_id):
     recipe = get_recipe(recipe_id)
     if recipe is None:
-        return "Recipe not found", 404
+        recipe=SpoonacularRecipeAdapter(recipe_id)
+        recipe=recipe.standardizeRecipe()
+        #return "Recipe not found", 404
     return render_template("recipe.html", recipe=recipe)
 
 @app.route('/recipe/<int:recipe_id>/export', methods=['GET'])
