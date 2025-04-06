@@ -5,12 +5,22 @@ from flask import redirect, make_response
 import io
 import urllib.parse
 
+class Creator(ABC):
+    @abstractmethod
+    def factory_method(self, recipe):
+        pass
+
+
+class ExporterCreator(Creator):
+    def factory_method(self, recipe) -> PDFExporter:
+        return PDFExporter(recipe)
+
 class Exporter(ABC):
     @abstractmethod
     def exportRecipe(self, recipe):
         pass
 
-class ShareExporter(Exporter):
+class EmailExporter(Exporter):
     def __init__(self, recipe):
         self.recipe = recipe
 
@@ -40,7 +50,7 @@ class ShareExporter(Exporter):
         return redirect(mailto_link)
 
 
-class DownloadExporter(Exporter):
+class PDFExporter(Exporter):
     def __init__(self, recipe):
         self.recipe = recipe
 
