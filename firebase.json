@@ -32,7 +32,8 @@
                 "**/.*", 
                 "**/node_modules/**", 
                 "firebase-config.js", 
-                "login-auth.js"
+                "login-auth.js",
+                "index.js"
     ]
   }
 }
