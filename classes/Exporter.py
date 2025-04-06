@@ -5,15 +5,15 @@ from flask import redirect, make_response
 import io
 import urllib.parse
 
-class Creator(ABC):
-    @abstractmethod
-    def factory_method(self, recipe):
-        pass
-
-
-class ExporterCreator(Creator):
-    def factory_method(self, recipe) -> PDFExporter:
-        return PDFExporter(recipe)
+# class Creator(ABC):
+#     @abstractmethod
+#     def factory_method(self, recipe):
+#         pass
+#
+#
+# class ExporterCreator(Creator):
+#     def factory_method(self, recipe) -> PDFExporter:
+#         return PDFExporter(recipe)
 
 class Exporter(ABC):
     @abstractmethod
