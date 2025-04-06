@@ -68,7 +68,7 @@ node_modules/
 # dataconnect generated files
 .dataconnect
 
-
+*.db
 firebase-auth.json
 .env
 venv
