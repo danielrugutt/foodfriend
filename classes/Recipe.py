@@ -9,8 +9,8 @@ class RecipeIngredient:
 
     def __str__(self):
         if self.unit is None:
-            return self.quantity + " " + self.name
-        return self.quantity + " " + self.unit + " of " + self.name
+            return str(self.quantity) + " " + self.name
+        return str(self.quantity) + " " + self.unit + " " + self.name
 
 class Nutrition:
     # THIS IS MISSING SO MUCH STUFF but it's just a placeholder for now
@@ -23,7 +23,8 @@ class Nutrition:
 class Recipe:
     def __init__(self, title: str, ingredients: List[RecipeIngredient], steps: List[str],
                  cooking_time: int, nutrition_info: Nutrition, servings: int, cuisine: str,
-                 diet: List[str], intolerances: List[str], ID: int):
+                 diet: List[str], intolerances: List[str], ID: int, img_url: str = None):
+        self.img_url = img_url
         self.title = title
         self.ingredients = ingredients
         self.steps = steps
@@ -47,6 +48,7 @@ class RecipeBuilder:
         self.diet = []
         self.intolerances = []
         self.ID = 0
+        self.img_url = None
 
     def set_ingredients(self, ingredients: List[RecipeIngredient]):
         self.ingredients = ingredients
@@ -84,10 +86,14 @@ class RecipeBuilder:
     def set_ID(self, ID: int):
         self.ID = ID
         return self
-
+    
+    def set_img_url(self, img_url: str):
+        self.img_url = img_url
+        return self
+    
     def build(self):
         return Recipe(self.title, self.ingredients, self.steps,
                       self.cooking_time, self.nutrition_info, self.servings,
-                      self.cuisine, self.diet, self.intolerances, self.ID)
+                      self.cuisine, self.diet, self.intolerances, self.ID,self.img_url)
 
 
