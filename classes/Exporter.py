@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 import os
 from fpdf import FPDF
-from flask import redirect
+from flask import redirect, make_response
+import io
 import urllib.parse
 
 class Exporter(ABC):
@@ -12,10 +13,8 @@ class Exporter(ABC):
 
 class ShareExporter(Exporter):
     def __init__(self, destination, recipe):
-        self.api_key=os.getenv("SPOON_API_KEY")
-        self.outgoing_email = destination
+        self.destination = destination
         self.recipe = recipe
-        print(recipe)
 
     def exportRecipe(self):
         email_subject = "Cool recipe: " + self.recipe.title
@@ -45,18 +44,43 @@ class ShareExporter(Exporter):
 
 class DownloadExporter(Exporter):
     def __init__(self, destination, recipe):
-        self.api_key=os.getenv("SPOON_API_KEY")
         self.recipe = recipe
-        self.pdf = None
+        self.destination = destination
 
-    def formatRecipe(self):
-        self.pdf = FPDF("P", "in", "Letter")
-        self.pdf.add_page()
-        self.pdf.set_font('Courier', 16)
-        self.pdf.cell(0, 0, self.recipe.title)
-
+    # NOTE WHEN ADDING TO THIS - IF YOU DO NOT DO PDF.LN BEFORE ADDING ANOTHER CELL, FORMATTING WILL BREAK IN STRANGE AND DRAMATIC WAYS
     def exportRecipe(self):
-        pass
+        # initial setup
+        pdf = FPDF("P", "in", "Letter")
+        pdf.add_page()
+        pdf.set_font("Courier", size=16)
+        pdf.cell(0, 0.5, self.recipe.title)
+        pdf.ln(0.3)
+
+        # ingredients
+        pdf.set_font("Courier", size=12)
+        pdf.cell(0, 0.3, "Ingredients")
+        pdf.ln(0.3)
+        for ingredient in self.recipe.ingredients:
+            pdf.cell(0, 0.3, str(ingredient), ln=True)
+        pdf.ln(0.3)
+
+        # steps
+        pdf.cell(0, 0.3, "Steps")
+        pdf.ln(0.3)
+        for i, step in enumerate(self.recipe.steps, start=1):
+            pdf.multi_cell(0, 0.3, txt=f"{i}. {step}")
+
+        # saving in RAM to not have to make temporary files
+        pdf_bytes = pdf.output(dest='S').encode('latin1')
+        pdf_output = io.BytesIO(pdf_bytes)
+
+        response = make_response(pdf_output.read())
+        response.headers.set("Content-Type", "application/pdf")
+        response.headers.set(
+            "Content-Disposition", f"attachment; filename={self.destination}"
+        )
+        return response
+
 
     def retrieveRecipe(self):
         pass
