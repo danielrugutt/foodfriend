@@ -173,6 +173,10 @@ def logout():
     response.set_cookie('session', '', expires=0)  # Optionally clear the session cookie
     return response
 
+@app.route('/calendar')
+def calendar():
+    return render_template('calendar.html')
+
 
 ##############################################
 """ Private Routes (Require authorization) """

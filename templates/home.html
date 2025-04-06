@@ -17,13 +17,15 @@
 
     {% include 'navbar_private.html' %}
 
+
     <main>
 
       <h1>Home Page</h1>
+      {% include 'calendar.html' %}
 
       <p>This is a public page that anyone can view.</p>
       <p>View a recipe <a href="recipe/1">here.</a> Note that this will not work if the sqlite database isn't working as intended.</p>
-
+      <p>See Calendar <a href="{{ url_for('calendar') }}">Meal Planner</a>.</p>
     </main>
 
 
