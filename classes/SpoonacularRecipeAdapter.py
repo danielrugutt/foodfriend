@@ -20,10 +20,12 @@ class SpoonacularRecipeAdapter(RecipeAdapter):
         steps_info=requests.get(self.instruction_address,self.query_payload)
         steps_info=steps_info.json()
         recipe = RecipeBuilder(recipe_info['title'])
+        recipe.set_ID(self.ID)
         recipe.set_servings(recipe_info['servings'])
         recipe.set_cuisine(", ".join([item for item in recipe_info['cuisines']]))
         recipe.set_cuisine(", ".join([item for item in recipe_info['diets']]))
         recipe.set_cooking_time(recipe_info['readyInMinutes'])
+        recipe.set_img_url(recipe_info['image'])
         ingredients=[]
         for ingredient_info in recipe_info['extendedIngredients']:
             ingredients.append(RecipeIngredient(ingredient_info['name'],ingredient_info['measures']['us']['amount'],ingredient_info['measures']['us']['unitShort']))
