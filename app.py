@@ -121,22 +121,24 @@ def list_recipes():
 @app.route('/recipe/<int:recipe_id>')
 def recipe(recipe_id):
     recipe = database.get_recipe(recipe_id)
+
     if recipe is None:
         recipe=SpoonacularRecipeAdapter(recipe_id)
         recipe=recipe.standardizeRecipe()
         #return "Recipe not found", 404
+
     return render_template("recipe.html", recipe=recipe)
 
 @app.route('/recipe/<int:recipe_id>/export', methods=['GET'])
 def export_recipe(recipe_id):
-    recipe = get_recipe(recipe_id)
+    recipe = database.get_recipe(recipe_id)
 
     export_type = request.args.get('type')
 
     if export_type == 'share':
-        exporter = ShareExporter(recipe)
+        exporter = ShareExporter("fish@water.com", recipe)
     elif export_type == 'download':
-        exporter = DownloadExporter(recipe)
+        exporter = DownloadExporter(recipe.title + ".pdf", recipe)
     else:
         return "Invalid export type", 400
 
