@@ -138,9 +138,9 @@ def export_recipe(recipe_id):
     export_type = request.args.get('type')
 
     if export_type == 'share':
-        exporter = ShareExporter("fish@water.com", recipe)
+        exporter = EmailExporter(recipe)
     elif export_type == 'download':
-        exporter = DownloadExporter(recipe.title + ".pdf", recipe)
+        exporter = PDFExporter(recipe)
     else:
         return "Invalid export type", 400
 

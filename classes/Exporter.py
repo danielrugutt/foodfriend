@@ -5,15 +5,23 @@ from flask import redirect, make_response
 import io
 import urllib.parse
 
+# class Creator(ABC):
+#     @abstractmethod
+#     def factory_method(self, recipe):
+#         pass
+#
+#
+# class ExporterCreator(Creator):
+#     def factory_method(self, recipe) -> PDFExporter:
+#         return PDFExporter(recipe)
+
 class Exporter(ABC):
     @abstractmethod
-    def exportRecipe(self, destination, recipe):
+    def exportRecipe(self, recipe):
         pass
 
-
-class ShareExporter(Exporter):
-    def __init__(self, destination, recipe):
-        self.destination = destination
+class EmailExporter(Exporter):
+    def __init__(self, recipe):
         self.recipe = recipe
 
     def exportRecipe(self):
@@ -42,10 +50,9 @@ class ShareExporter(Exporter):
         return redirect(mailto_link)
 
 
-class DownloadExporter(Exporter):
-    def __init__(self, destination, recipe):
+class PDFExporter(Exporter):
+    def __init__(self, recipe):
         self.recipe = recipe
-        self.destination = destination
 
     # NOTE WHEN ADDING TO THIS - IF YOU DO NOT DO PDF.LN BEFORE ADDING ANOTHER CELL, FORMATTING WILL BREAK IN STRANGE AND DRAMATIC WAYS
     def exportRecipe(self):
@@ -77,10 +84,7 @@ class DownloadExporter(Exporter):
         response = make_response(pdf_output.read())
         response.headers.set("Content-Type", "application/pdf")
         response.headers.set(
-            "Content-Disposition", f"attachment; filename={self.destination}"
+            "Content-Disposition", f"attachment; filename={self.recipe.title}"
         )
         return response
 
-
-    def retrieveRecipe(self):
-        pass
