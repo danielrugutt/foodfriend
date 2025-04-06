@@ -9,12 +9,11 @@ from classes.DietaryPreference import DietaryPreference
 from classes.Search import Search
 from classes.Recipe import *
 from classes.Exporter import *
-from database import *
+from classes.Database import Database
 import secrets
 import os
 import sys
 import firebase_admin
-import sqlite3
 import json
 
 load_dotenv()
@@ -36,7 +35,8 @@ db = firestore.client()
 
 app = Flask(__name__)
 
-initialize_database()
+database = Database()
+database.initialize_database()
 
 taratorRecipe = (
     RecipeBuilder("Tarator")
@@ -51,7 +51,7 @@ taratorRecipe = (
     .build()
 )
 
-insert_recipe(taratorRecipe)
+database.insert_recipe(taratorRecipe)
 
 ########################################
 """ Authentication and Authorization """
@@ -116,12 +116,12 @@ def search():
 
 @app.route('/viewrecipes')
 def list_recipes():
-    recipes = get_all_recipes()
+    recipes = database.get_all_recipes()
     return jsonify(recipes), 200
 
 @app.route('/recipe/<int:recipe_id>')
 def recipe(recipe_id):
-    recipe = get_recipe(recipe_id)
+    recipe = database.get_recipe(recipe_id)
     if recipe is None:
         return "Recipe not found", 404
     return render_template("recipe.html", recipe=recipe)
