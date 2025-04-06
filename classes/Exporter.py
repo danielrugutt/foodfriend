@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 import os
 from fpdf import FPDF
+from flask import redirect
+import urllib.parse
 
 class Exporter(ABC):
     @abstractmethod
@@ -16,24 +18,29 @@ class ShareExporter(Exporter):
         print(recipe)
 
     def exportRecipe(self):
-        self.email_subject = (
-            "Cool recipe: ", self.recipe.title
-        )
+        email_subject = "Cool recipe: " + self.recipe.title
 
-        email_text = []
-        email_text.append(self.recipe.title)
-        email_text.append("\nIngredients needed:")
-        for ingredient in self.recipe.ingredients:
-            email_text.append(str(ingredient))
+        email_body = [
+            self.recipe.title,
+            "",
+            "Ingredients needed:"
+        ]
 
-        stepNumber = 1
-        email_text.append("\n")
-        for step in self.recipe.steps:
-            email_text.append("Step " + str(stepNumber) + ": " + step)
-            stepNumber += 1
+        for ingredients in self.recipe.ingredients:
+            email_body.append(str(ingredients))
 
-        print(email_text)
-        return(email_text)
+        email_body.append("")
+        for i, step in enumerate(self.recipe.steps, start=1):
+            email_body.append(f"Step {i}: {step}")
+
+        completed_body = "\n".join(email_body)
+
+        clean_subject = urllib.parse.quote(email_subject)
+        clean_body = urllib.parse.quote(completed_body)
+
+        mailto_link = f"mailto:?subject={clean_subject}&body={clean_body}"
+
+        return redirect(mailto_link)
 
 
 class DownloadExporter(Exporter):
