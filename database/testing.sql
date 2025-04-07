@@ -40,3 +40,23 @@ CREATE TABLE TestIngredient
     FOREIGN KEY (recipe_id) REFERENCES Recipe(id) ON DELETE CASCADE,
     PRIMARY KEY (recipe_id, name)
 );
+
+CREATE TABLE UserData
+(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    email TEXT2 NOT NULL
+    -- recipelist, plannedday, and dietarypreferences have their own tables
+);
+
+CREATE TABLE DietaryPreference
+(
+    user_id INTEGER NOT NULL,
+    max_sugar INTEGER,
+    intolerances BLOB,
+    diet BLOB,
+    excludedIngredient BLOB,
+    excludedCuisine BLOB,
+    FOREIGN KEY (user_id) REFERENCES UserData(id) ON DELETE CASCADE,
+    PRIMARY KEY (user_id)
+);
