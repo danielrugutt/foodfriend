@@ -4,16 +4,20 @@ from fpdf import FPDF
 from flask import redirect, make_response
 import io
 import urllib.parse
+from enum import Enum
 
-# class Creator(ABC):
-#     @abstractmethod
-#     def factory_method(self, recipe):
-#         pass
-#
-#
-# class ExporterCreator(Creator):
-#     def factory_method(self, recipe) -> PDFExporter:
-#         return PDFExporter(recipe)
+class FactoryMethod():
+    class ExportType(Enum):
+        pdf = "pdf"
+        email = "email"
+
+    @staticmethod
+    def create_exporter(recipe, export_type):
+        print(FactoryMethod.ExportType.pdf.name)
+        if export_type == FactoryMethod.ExportType.pdf.name:
+            return PDFExporter(recipe)
+        else:
+            return EmailExporter(recipe)
 
 class Exporter(ABC):
     @abstractmethod

@@ -66,8 +66,8 @@
         <p><strong>Fats:</strong> {{ recipe.nutrition_info.fats }}g</p> #}
 
 
-    <a href="{{ url_for('export_recipe', recipe_id=recipe.ID, type='share') }}">Share Recipe</a>
-    <a href="{{ url_for('export_recipe', recipe_id=recipe.ID, type='download') }}">Download Recipe</a>
+    <a href="{{ url_for('export_recipe', recipe_id=recipe.ID, type='email') }}">Share Recipe</a>
+    <a href="{{ url_for('export_recipe', recipe_id=recipe.ID, type='pdf') }}">Download Recipe</a>
 
 
 
