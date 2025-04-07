@@ -135,14 +135,9 @@ def export_recipe(recipe_id):
     if recipe is None:
         recipe=SpoonacularRecipeAdapter(recipe_id)
         recipe=recipe.standardizeRecipe()
-    export_type = request.args.get('type')
 
-    if export_type == 'share':
-        exporter = EmailExporter(recipe)
-    elif export_type == 'download':
-        exporter = PDFExporter(recipe)
-    else:
-        return "Invalid export type", 400
+    export_type = request.args.get('type')
+    exporter = FactoryMethod.create_exporter(recipe, export_type)
 
     return exporter.exportRecipe()
 

@@ -86,11 +86,11 @@ class RecipeBuilder:
     def set_ID(self, ID: int):
         self.ID = ID
         return self
-    
+
     def set_img_url(self, img_url: str):
         self.img_url = img_url
         return self
-    
+
     def build(self):
         return Recipe(self.title, self.ingredients, self.steps,
                       self.cooking_time, self.nutrition_info, self.servings,
