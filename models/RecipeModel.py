@@ -40,53 +40,11 @@ class RecipeModel(db.Model):
     def get_intolerances(self):
         return self.from_blob(self.intolerances)
 
-    @staticmethod
-    def recipe_to_recipe_model(recipe_object):
-        recipe_model = RecipeModel(
-            title=recipe_object.title,
-            cooking_time=recipe_object.cooking_time,
-            servings=recipe_object.servings,
-            cuisine=recipe_object.cuisine,
-            steps=recipe_object.steps,
-            diet=recipe_object.diet,
-            intolerances=recipe_object.intolerances
-        )
-
-        recipe_model.ingredients = [
-            RecipeIngredientModel(
-                name=ingredient.name,
-                quantity=ingredient.quantity,
-                unit=ingredient.unit,
-                recipe=recipe_model
-            )
-            for ingredient in recipe_object.ingredients
-        ]
-
-        return recipe_model
-
-    def to_recipe_object(self):
-        from classes.Recipe import Recipe, RecipeIngredient, Nutrition
 
 
-        ingredient_list = []
-        for ingredient in self.ingredients:
-            ingredient_list.append(RecipeIngredient(name=ingredient.name, quantity=ingredient.quantity, unit=ingredient.unit))
 
-         # placeholder
-        nutrition_info = Nutrition(0, 0, 0, 0)
 
-        return Recipe(
-            title=self.title,
-            ingredients=ingredient_list,
-            steps=self.get_steps(),
-            cooking_time=self.cooking_time,
-            nutrition_info=nutrition_info,
-            servings=self.servings,
-            cuisine=self.cuisine,
-            diet=self.get_diet(),
-            intolerances=self.get_intolerances(),
-            ID=self.id,
-            img_url=None
-        )
+
+
 
 
