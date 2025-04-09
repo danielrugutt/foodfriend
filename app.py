@@ -52,8 +52,7 @@ taratorRecipe = (
 
 database.insert_recipe(taratorRecipe)
 
-########################################
-""" Authentication and Authorization """
+""" AUTHENTICATION ROUTES """
 
 # Add this to any request needing authentication
 def auth_required(f):
@@ -86,11 +85,7 @@ def authorize():
         return "Unauthorized", 401
 
 
-#####################
-""" Public Routes """
-
-print("Running from:", os.getcwd())
-print("Template exists?", os.path.exists("templates/home.html"))
+""" GUEST ROUTES """
 @app.route('/')
 def home():
     return render_template('home.html')
@@ -171,9 +166,7 @@ def calendar():
     return render_template('calendar.html')
 
 
-##############################################
-""" Private Routes (Require authorization) """
-
+""" LOGGED IN USER ROUTES """
 @app.route('/dashboard')
 @auth_required
 def dashboard():
