@@ -4,3 +4,4 @@ gunicorn
 python-dotenv
 oracledb
 fpdf
+flask_sqlalchemy

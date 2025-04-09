@@ -1,8 +1,9 @@
-import sqlite3
-import json
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+from models.RecipeModel import RecipeModel
+from models.RecipeIngredientModel import RecipeIngredientModel
+from db import db
 import os
-from .Recipe import Recipe, RecipeBuilder, RecipeIngredient
-
 
 class Singleton(type):
     """ A metaclass for making Database a singleton"""
@@ -13,112 +14,47 @@ class Singleton(type):
             database_class._instances[database_class] = super(Singleton, database_class).__call__(*args, **kwargs)
         return database_class._instances[database_class]
 
+
 class Database(metaclass=Singleton):
-    def __init__(self):
-        self.database_path = "database/foodfriend.db"
-        self.database_schema = "database/testing.sql"
+    def __init__(self, app):
+        self.app = app
+        base_dir = os.path.abspath(os.path.dirname(__file__))
+        self.database_path = os.path.join(base_dir, "..", "database", "foodfriend.db")
+        self.database_uri = "sqlite:///" + self.database_path
+        self.app.config['SQLALCHEMY_DATABASE_URI'] = self.database_uri
+        db.init_app(self.app)
+
 
     def initialize_database(self):
-        if not os.path.exists(self.database_path):
-            print("Database does not exist, creating!");
-            connection = sqlite3.connect(self.database_path)
-            databaseFile = open(self.database_schema, "r")
-            connection.executescript(databaseFile.read())
-            databaseFile.close()
+        os.makedirs("database", exist_ok=True)
 
-    def insert_recipe(self, recipe):
-        with sqlite3.connect(self.database_path) as connection:
-            cursor = connection.cursor()
-            cursor.execute("""
-                INSERT INTO Recipe (title, cooking_time, servings, cuisine, steps, diet, intolerances)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-            """, (
-                recipe.title,
-                recipe.cooking_time,
-                recipe.servings,
-                recipe.cuisine,
-                json.dumps(recipe.steps),
-                json.dumps(recipe.diet),
-                json.dumps(recipe.intolerances),
-            ))
+        with self.app.app_context():
+            from models.RecipeModel import RecipeModel
+            from models.RecipeIngredientModel import RecipeIngredientModel
+            db.create_all()
 
-            new_recipe_id = cursor.lastrowid
+        return db
 
-            # note that this currently does not connect to ingredient correctly, just testIngredient
-            for recipe_ingredient in recipe.ingredients:
-                cursor.execute("""
-                    INSERT INTO TestIngredient (name, quantity, unit, recipe_id)
-                    VALUES (?, ?, ?, ?)
-                """, (
-                    recipe_ingredient.name,
-                    recipe_ingredient.quantity,
-                    recipe_ingredient.unit,
-                    new_recipe_id
-                ))
+    def insert_recipe(self, recipe_object):
+        """ Given a recipe object, inserts into the database """
+        recipe_model = RecipeModel.recipe_to_recipe_model(recipe_object)
 
-            connection.commit()
-
-            return new_recipe_id
-
-
-    def get_all_recipes(self):
-        with sqlite3.connect(self.database_path) as connection:
-            connection.row_factory = sqlite3.Row
-            cursor = connection.cursor()
-            cursor.execute("SELECT * FROM Recipe")
-            return [dict(row) for row in cursor.fetchall()]
-
-    def get_recipe(self, recipe_id):
-        with sqlite3.connect(self.database_path) as connection:
-            connection.row_factory = sqlite3.Row
-            cursor = connection.cursor()
-            cursor.execute("SELECT * FROM Recipe WHERE id = ?", (recipe_id,))
-            row = cursor.fetchone()
-
-            if row:
-                recipe_dict =  {
-                    "id": row["id"],
-                    "title": row["title"],
-                    "cuisine": row["cuisine"],
-                    "cooking_time": row["cooking_time"],
-                    "servings": row["servings"],
-                    "diet": json.loads(row["diet"]),
-                    "intolerances": json.loads(row["intolerances"]),
-                    "steps": json.loads(row["steps"]),
-                    "ingredients": self.get_recipe_ingredients(recipe_id),
-                }
-                return self.construct_recipe_from_dict(recipe_dict)
-
-            else:
-                return None
-
-    def get_recipe_ingredients(self, recipe_id):
-        with sqlite3.connect(self.database_path) as connection:
-            connection.row_factory = sqlite3.Row
-            cursor = connection.cursor()
-            cursor.execute("SELECT * FROM TestIngredient WHERE recipe_id = ?", (recipe_id,))
-            return [dict(row) for row in cursor.fetchall()]
-
-    def construct_recipe_from_dict(self, dictionary):
-        builder = RecipeBuilder(dictionary["title"])
-
-        ingredientList = []
-        for ingredient in dictionary["ingredients"]:
-            ingredientList.append(RecipeIngredient(ingredient["name"], ingredient["quantity"], ingredient["unit"]))
-
-
-        recipe = (
-            builder
-            .set_ID(dictionary["id"])
-            .set_ingredients(ingredientList)
-            .set_steps(dictionary["steps"])
-            .set_cooking_time(dictionary["cooking_time"])
-            .set_servings(dictionary["servings"])
-            .set_cuisine(dictionary["cuisine"])
-            .set_diet(dictionary["diet"])
-            .set_intolerances(dictionary["intolerances"])
-            .build()
+        for ingredient in recipe_object.ingredients:
+            ingredient_model = RecipeIngredientModel(
+            name=ingredient.name,
+            quantity=ingredient.quantity,
+            unit=ingredient.unit,
+            recipe=recipe_model
         )
 
-        return recipe
+        with self.app.app_context():
+            db.session.add(recipe_model)
+            db.session.commit()
+        return recipe_object.ID
+
+    def get_recipe(self, recipe_id):
+        """ Grabs a recipe model from the database and converts it to a recipe object """
+        recipe_model = RecipeModel.query.get(recipe_id)
+        return recipe_model.to_recipe_object() if recipe_model else None
+
 
