@@ -74,3 +74,4 @@ firebase-auth.json
 venv
 
 classes/__pycache__/
+__pycache__/

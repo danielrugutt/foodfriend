@@ -1,5 +1,5 @@
 from flask import Flask, redirect, render_template, request, make_response, session, abort, jsonify, url_for
-# from flask_sqlalchemy import SQLAlchemy
+from flask_sqlalchemy import SQLAlchemy
 from functools import wraps
 from firebase_admin import credentials, firestore, auth
 from datetime import timedelta
@@ -32,12 +32,10 @@ app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Can be 'Strict', 'Lax', or 'Non
 # Firebase Admin SDK setup
 cred = credentials.Certificate("firebase-auth.json")
 firebase_admin.initialize_app(cred)
-db = firestore.client()
+firestore_db = firestore.client()
 
-app = Flask(__name__)
-
-database = Database()
-database.initialize_database()
+database = Database(app)
+db = database.initialize_database()
 
 taratorRecipe = (
     RecipeBuilder("Tarator")
@@ -91,6 +89,8 @@ def authorize():
 #####################
 """ Public Routes """
 
+print("Running from:", os.getcwd())
+print("Template exists?", os.path.exists("templates/home.html"))
 @app.route('/')
 def home():
     return render_template('home.html')
@@ -113,10 +113,6 @@ def search():
 
     return render_template("search_results.html", results=response,search_query=search_query)
 
-@app.route('/viewrecipes')
-def list_recipes():
-    recipes = database.get_all_recipes()
-    return jsonify(recipes), 200
 
 @app.route('/recipe/<int:recipe_id>')
 def recipe(recipe_id):
