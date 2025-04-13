@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" >
+
+  <title>Settings</title>
+
+    
+  </head>
+  <body>
+    <h1>Settings</h1>
+    <form id="foodPreferencesForm">
+      <div>
+        <label>
+          Excluded Cuisine:
+          <input type="text" id="excludedCuisineInput" />
+          <button type="button" id="addCuisine">Add</button>
+        </label>
+        <ul id="excludedCuisineList"></ul>
+      </div>
+  
+      <div>
+        <label>
+          Excluded Ingredient:
+          <input type="text" id="excludedIngredientInput" />
+          <button type="button" id="addIngredient">Add</button>
+        </label>
+        <ul id="excludedIngredientList"></ul>
+      </div>
+  
+      <div>
+        <label>
+          Max Sugar (grams):
+          <input type="number" id="maxSugar" name="maxSugar" />
+        </label>
+      </div>
+  
+      <div>
+        <label>
+          Intolerances:
+          <input type="text" id="intoleranceInput" />
+          <button type="button" id="addIntolerance">Add</button>
+        </label>
+        <ul id="intoleranceList"></ul>
+      </div>
+  
+      <div>
+        <label>
+          Diet:
+          <input type="text" id="dietInput" placeholder="e.g. vegan, paleo" />
+          <button type="button" id="addDiet">Add</button>
+        </label>
+        <ul id="dietList"></ul>
+      </div>
+  
+      <button type="submit">Submit</button>
+      <script src="../static/dietary_preference.js"></script>
+    </form>
+  
+  </body>
+  <style>
+    ul {
+      list-style-type: disc;
+      margin-left: 20px;
+    }
+  
+    .removeBtn {
+      background: none;
+      border: none;
+      color: red;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-left: 8px;
+    }
+  
+    .removeBtn:hover {
+      text-decoration: underline;
+    }
+  </style>
+</html>

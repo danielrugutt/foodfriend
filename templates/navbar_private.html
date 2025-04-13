@@ -13,7 +13,7 @@
             <a class="dropbtn" id="dropBtn">Account</a>
             <div class="dropdown-content">
                 <a href="#news1">Profile</a>
-                <a href="#news2">Settings</a>
+                <a id="settings-btn" href="{{ url_for('settings') }}">Settings</a>
                 <a id="sign-out-btn" href="{{ url_for('logout') }}">Logout</a>
             </div>
         </div>
