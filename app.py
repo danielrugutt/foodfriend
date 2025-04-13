@@ -109,6 +109,16 @@ def search():
     return render_template("search_results.html", results=response,search_query=search_query)
 
 
+@app.route('/settings', methods=['POST','GET'])
+def settings():
+    #TODO: POPULATE LISTS WITH USERS PREFERANCES AND CLEAN UP STYLING
+    if request.method=='POST':
+        data=request.get_json()
+        DietaryPreference(data['excludedCuisines'],data['excludedIngredients'],data['maxSugar'],data['intolerances'],data['diets'])
+        print(data)
+    return render_template("settings.html") 
+
+ 
 @app.route('/recipe/<int:recipe_id>')
 def recipe(recipe_id):
     recipe = database.get_recipe(recipe_id)
