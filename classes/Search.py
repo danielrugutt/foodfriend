@@ -14,7 +14,7 @@ class Search:
 
         query_payload={'apiKey':self.api_key,
                        'query':query,
-                       'diet':dietary_preference.diet,
+                       'diet':dietary_preference.diets,
                        'excludeCuisine':dietary_preference.exclude_cuisine,
                        'excludeIngredients':dietary_preference.exclude_ingredients,
                        'maxSugar':dietary_preference.max_sugar}

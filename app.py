@@ -37,6 +37,10 @@ firestore_db = firestore.client()
 database = Database(app)
 db = database.initialize_database()
 
+#test user only
+test_user=DietaryPreference(["greek"],["paprika"],["200"],["Peanut"],["vegetarian"] )
+
+
 taratorRecipe = (
     RecipeBuilder("Tarator")
     .set_ingredients([RecipeIngredient("Cucumber", 1,), RecipeIngredient("Walnut", 0.25, "cup"), RecipeIngredient("Yogurt", 0.5, "tub")])
@@ -92,11 +96,13 @@ def home():
 
 @app.route('/search', methods=['GET', 'POST'])
 def search():
+    #for testing between setting and searching
+    global test_user
     search_query = None
     if request.method == 'GET':
          search_query = request.args.get('search_query') # For GET requests
     #read from seach bar, search bar is what directs to /search
-    user_diet=DietaryPreference("greek","paprika","200","Peanut","vegetarian")
+    user_diet=test_user
     user_search=Search(user_diet)
     response=user_search.search(search_query)
 
@@ -111,12 +117,18 @@ def search():
 
 @app.route('/settings', methods=['POST','GET'])
 def settings():
-    #TODO: POPULATE LISTS WITH USERS PREFERANCES AND CLEAN UP STYLING
+    #TESTING ONLY
+    global test_user
+    user_preferences = { "excludedCuisines": test_user.exclude_cuisine,
+                        "excludedIngredients": test_user.exclude_ingredients,
+                        "maxSugar": test_user.max_sugar,
+                        "intolerances": test_user.intolerances,
+                        "diets": test_user.diets}
     if request.method=='POST':
         data=request.get_json()
-        DietaryPreference(data['excludedCuisines'],data['excludedIngredients'],data['maxSugar'],data['intolerances'],data['diets'])
+        test_user=DietaryPreference(data['excludedCuisines'],data['excludedIngredients'],data['maxSugar'],data['intolerances'],data['diets'])
         print(data)
-    return render_template("settings.html") 
+    return render_template("settings.html",preferences=user_preferences) 
 
  
 @app.route('/recipe/<int:recipe_id>')

@@ -1,85 +1,157 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" >
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+    <title>Settings</title>
+    <style>
+      body {
+        font-family: 'Poppins', sans-serif;
+        padding: 2rem;
+        background-color: #f8f9fa;
+        color: #333;
+      }
 
-  <title>Settings</title>
+      h1 {
+        font-size: 2rem;
+        margin-bottom: 1.5rem;
+      }
 
-    
+      form > div {
+        margin-bottom: 1.5rem;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+      }
+
+      input[type='text'],
+      input[type='number'] {
+        padding: 0.5rem;
+        font-size: 1rem;
+        width: 250px;
+        margin-right: 0.5rem;
+      }
+
+      button {
+        padding: 0.4rem 0.75rem;
+        font-size: 0.9rem;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background-color: #0056b3;
+      }
+
+      ul {
+        list-style: none;
+        padding: 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 0.5rem;
+      }
+
+      li {
+        background-color: #e9ecef;
+        padding: 0.4rem 0.75rem;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+      }
+
+      .removeBtn {
+        background: none;
+        border: none;
+        color: red;
+        font-size: 1rem;
+        cursor: pointer;
+        margin-left: 8px;
+      }
+
+      .removeBtn:hover {
+        text-decoration: underline;
+      }
+
+      #foodPreferencesForm > button[type="submit"] {
+        margin-top: 1rem;
+        background-color: #28a745;
+      }
+
+      #foodPreferencesForm > button[type="submit"]:hover {
+        background-color: #218838;
+      }
+
+      button {
+        display: inline-block; /* Ensures the button only takes up as much space as needed */
+        padding: 0.4rem 0.75rem;
+        font-size: 0.9rem;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-top: 0.3rem;
+        margin-right: 0.5rem;
+        width: auto; /* Override any full-width behavior */
+      }
+    </style>
   </head>
   <body>
     <h1>Settings</h1>
     <form id="foodPreferencesForm">
       <div>
-        <label>
-          Excluded Cuisine:
-          <input type="text" id="excludedCuisineInput" />
-          <button type="button" id="addCuisine">Add</button>
-        </label>
+        <label>Excluded Cuisine:</label>
+        <input type="text" id="excludedCuisineInput" />
+        <button type="button" id="addCuisine">Add</button>
         <ul id="excludedCuisineList"></ul>
       </div>
-  
+
       <div>
-        <label>
-          Excluded Ingredient:
-          <input type="text" id="excludedIngredientInput" />
-          <button type="button" id="addIngredient">Add</button>
-        </label>
+        <label>Excluded Ingredient:</label>
+        <input type="text" id="excludedIngredientInput" />
+        <button type="button" id="addIngredient">Add</button>
         <ul id="excludedIngredientList"></ul>
       </div>
-  
+
       <div>
-        <label>
-          Max Sugar (grams):
-          <input type="number" id="maxSugar" name="maxSugar" />
-        </label>
+        <label>Max Sugar (grams):</label>
+        <input type="number" id="maxSugar" name="maxSugar" />
       </div>
-  
+
       <div>
-        <label>
-          Intolerances:
-          <input type="text" id="intoleranceInput" />
-          <button type="button" id="addIntolerance">Add</button>
-        </label>
+        <label>Intolerances:</label>
+        <input type="text" id="intoleranceInput" />
+        <button type="button" id="addIntolerance">Add</button>
         <ul id="intoleranceList"></ul>
       </div>
-  
+
       <div>
-        <label>
-          Diet:
-          <input type="text" id="dietInput" placeholder="e.g. vegan, paleo" />
-          <button type="button" id="addDiet">Add</button>
-        </label>
+        <label>Diet:</label>
+        <input type="text" id="dietInput" placeholder="e.g. vegan, paleo" />
+        <button type="button" id="addDiet">Add</button>
         <ul id="dietList"></ul>
       </div>
-  
+
       <button type="submit">Submit</button>
-      <script src="../static/dietary_preference.js"></script>
     </form>
-  
+    <script>
+      //this shows errors but works 
+      const savedPreferences = {{preferences|tojson}};
+    </script>
+    <script src="../static/dietary_preference.js"></script>
   </body>
-  <style>
-    ul {
-      list-style-type: disc;
-      margin-left: 20px;
-    }
-  
-    .removeBtn {
-      background: none;
-      border: none;
-      color: red;
-      font-size: 1rem;
-      cursor: pointer;
-      margin-left: 8px;
-    }
-  
-    .removeBtn:hover {
-      text-decoration: underline;
-    }
-  </style>
 </html>

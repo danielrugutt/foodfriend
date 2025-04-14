@@ -3,7 +3,24 @@ document.addEventListener("DOMContentLoaded", () => {
     const ingredientList = [];
     const intoleranceList = [];
     const dietList = [];
-  
+    if (savedPreferences) {
+      //console.log(savedPreferences);
+      cuisineList.push(...(savedPreferences.excludedCuisines || []));
+      ingredientList.push(...(savedPreferences.excludedIngredients || []));
+      intoleranceList.push(...(savedPreferences.intolerances || []));
+      dietList.push(...(savedPreferences.diets || []));
+    
+      updateOutput(cuisineList, "excludedCuisineList", cuisineList);
+      updateOutput(ingredientList, "excludedIngredientList", ingredientList);
+      updateOutput(intoleranceList, "intoleranceList", intoleranceList);
+      updateOutput(dietList, "dietList", dietList);
+    
+      if (savedPreferences.maxSugar !== null && savedPreferences.maxSugar !== undefined) {
+        document.getElementById("maxSugar").value = savedPreferences.maxSugar;
+      }
+     
+    }
+
     function addToList(inputId, list, outputId) {
       const input = document.getElementById(inputId);
       const value = input.value.trim();
