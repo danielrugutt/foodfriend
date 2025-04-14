@@ -22,26 +22,15 @@ const errorMsgPassword = document.getElementById("password-error-message")
 const errorMsgGoogleSignIn = document.getElementById("google-signin-error-message")
 
 
-
 /* == UI - Event Listeners == */
-if (signInWithGoogleButtonEl && signInButtonEl) {
-    signInWithGoogleButtonEl.addEventListener("click", authSignInWithGoogle)
-    signInButtonEl.addEventListener("click", authSignInWithEmail)
-}
-
-if (createAccountButtonEl) {
-    createAccountButtonEl.addEventListener("click", authCreateAccountWithEmail)
-}
-
-if (signUpWithGoogleButtonEl) {
-    signUpWithGoogleButtonEl.addEventListener("click", authSignUpWithGoogle)
-}
-
-if (forgotPasswordButtonEl) {
-    forgotPasswordButtonEl.addEventListener("click", resetPassword)
-}
-
-
+signInWithGoogleButtonEl && signInWithGoogleButtonEl.addEventListener("click", authSignInWithGoogle);
+signInButtonEl           && signInButtonEl.addEventListener("click", authSignInWithEmail);
+signUpWithGoogleButtonEl && signUpWithGoogleButtonEl.addEventListener("click", authSignUpWithGoogle);
+forgotPasswordButtonEl   && forgotPasswordButtonEl.addEventListener("click", resetPassword);
+createAccountButtonEl    && createAccountButtonEl.addEventListener("submit", (e) => {
+    e.preventDefault();
+    authCreateAccountWithEmail();
+});
 
 
 /* === Main Code === */
