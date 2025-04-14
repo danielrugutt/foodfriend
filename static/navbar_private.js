@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", function () {
     const navbar = `
         <div class="navbar">
-            <img class="logo-img" src="images/default_logo.png'" />
+            <img class="default_logo.png" />
             <form class="search-form" action="/search" method="GET">
                 <input type="text" placeholder="Search..." class="search-input" name="search_query" id="search_query">
                 <button type="submit" class="search-button">Search</button>
@@ -10,7 +10,6 @@ document.addEventListener("DOMContentLoaded", function () {
             <div class="navbar-right" id="navbarRight">
                 <span class="closebtn">&times;</span>
                 <a href="/dashboard.html">Dashboard</a>
-                <a href="/login">Actions</a>
                 <div class="dropdown">
                     <a class="dropbtn" id="dropBtn">Account</a>
                     <div class="dropdown-content">

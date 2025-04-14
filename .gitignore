@@ -75,3 +75,5 @@ venv
 
 classes/__pycache__/
 __pycache__/
+
+database/foodfriend.db
