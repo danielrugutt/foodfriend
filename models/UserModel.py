@@ -6,7 +6,8 @@ class UserModel(db.Model):
     id = db.Column(db.String, primary_key=True)
     name = db.Column(db.String)
     email = db.Column(db.String, nullable=False)
-    # bookmarked recipes
+
+    recipe_lists = db.relationship("RecipeListModel", back_populates="user", cascade="all, delete-orphan")
     # mealhistory
     # preferences
 
