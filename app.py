@@ -57,7 +57,6 @@ taratorRecipe = (
 database.insert_recipe(taratorRecipe)
 
 """ AUTHENTICATION ROUTES """
-
 # Add this to any request needing authentication
 def auth_required(f):
     @wraps(f)
@@ -145,7 +144,9 @@ def recipe(recipe_id):
     if recipe is None:
         recipe=SpoonacularRecipeAdapter(recipe_id)
         recipe=recipe.standardizeRecipe()
-        #return "Recipe not found", 404
+
+    if recipe is None:
+        return "Recipe not found", 404
 
     return render_template("recipe.html", recipe=recipe)
 
@@ -202,12 +203,38 @@ def calendar():
 def dashboard():
     return render_template('dashboard.html')
 
-@app.route('/recipe/<int:recipe_id>/bookmark')
+
+@app.route('/recipe/<int:recipe_id>/bookmark/')
 @auth_required
-def bookmark_recipe(recipe_id):
+def bookmark(recipe_id):
     recipe = database.get_recipe(recipe_id)
+
+    if recipe is None:
+        recipe=SpoonacularRecipeAdapter(recipe_id)
+        recipe=recipe.standardizeRecipe()
+
+    if recipe is None:
+        return "Recipe not found", 404
+
     uid = session.get("uid")
-    return "Saving recipe " + str(recipe_id) + " with user " + str(uid)
+    database.add_recipe_to_list(uid, recipe_id)
+    return "Saving recipe " + str(recipe_id) + " with user " + str(uid) + " to bookmarks"
+
+@app.route('/recipe/<int:recipe_id>/bookmark/<int:list_id>')
+@auth_required
+def add_to_list(recipe_id, list_id):
+    recipe = database.get_recipe(recipe_id)
+
+    if recipe is None:
+        recipe=SpoonacularRecipeAdapter(recipe_id)
+        recipe=recipe.standardizeRecipe()
+
+    if recipe is None:
+        return "Recipe not found", 404
+
+    uid = session.get("uid")
+    database.add_recipe_to_list(uid, recipe_id, list_id)
+    return "Saving recipe " + str(recipe_id) + " with user " + str(uid) + " to list " + str(list_id)
 
 @app.route('/profile')
 @auth_required
