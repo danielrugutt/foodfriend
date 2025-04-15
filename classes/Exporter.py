@@ -88,7 +88,7 @@ class PDFExporter(Exporter):
         response = make_response(pdf_output.read())
         response.headers.set("Content-Type", "application/pdf")
         response.headers.set(
-            "Content-Disposition", f"attachment; filename={self.recipe.title}"
+            "Content-Disposition", f"attachment; filename={self.recipe.title}.pdf"
         )
         return response
 
