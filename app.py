@@ -207,6 +207,14 @@ def dashboard():
 @auth_required
 def bookmark_recipe(recipe_id):
     recipe = database.get_recipe(recipe_id)
+
+    if recipe is None:
+        recipe=SpoonacularRecipeAdapter(recipe_id)
+        recipe=recipe.standardizeRecipe()
+
+    if recipe is None:
+        return "Recipe not found", 404
+
     uid = session.get("uid")
     return "Saving recipe " + str(recipe_id) + " with user " + str(uid)
 
