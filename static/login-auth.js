@@ -171,14 +171,11 @@ function resetPassword() {
 
         resetFormView.style.display = "none"
         resetSuccessView.style.display = "block"
-
     })
     .catch((error) => {
         const errorCode = error.code;
-        const errorMessage = error.message;
- 
+        alert("Error sending reset email: ", errorCode);
     });
-
 }
 
 
