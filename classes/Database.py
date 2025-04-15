@@ -3,6 +3,8 @@ from flask_sqlalchemy import SQLAlchemy
 from models.RecipeModel import RecipeModel
 from models.IngredientModel import IngredientModel
 from models.RecipeIngredientModel import RecipeIngredientModel
+from models.RecipeListModel import RecipeListModel, RecipeListRecipeModel
+from models.UserModel import UserModel
 from db import db
 import os
 
@@ -34,6 +36,7 @@ class Database(metaclass=Singleton):
             from models.IngredientModel import IngredientModel
             from models.RecipeIngredientModel import RecipeIngredientModel
             from models.UserModel import UserModel
+            from models.RecipeListModel import RecipeListModel, RecipeListRecipeModel
             db.create_all()
 
         return db
@@ -129,5 +132,18 @@ class Database(metaclass=Singleton):
             ID=recipe_model.id,
             img_url=recipe_model
         )
+
+    def check_and_create_user(self, uid, email):
+        """ Given a UID and email, checks if the user exists locally - makes them if no """
+        with self.app.app_context():
+            existing_user = UserModel.query.filter_by(id=uid).first()
+
+            if not existing_user:
+                user = UserModel(id=uid, email=email)
+                db.session.add(user)
+                db.session.commit()
+
+
+
 
 

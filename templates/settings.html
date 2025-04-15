@@ -12,18 +12,6 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
     <title>Settings</title>
     <style>
-      body {
-        font-family: 'Poppins', sans-serif;
-        padding: 2rem;
-        background-color: #f8f9fa;
-        color: #333;
-      }
-
-      h1 {
-        font-size: 2rem;
-        margin-bottom: 1.5rem;
-      }
-
       form > div {
         margin-bottom: 1.5rem;
       }
@@ -112,44 +100,45 @@
   </head>
   <body>
     {% include 'navbar_private.html' %}
+    <main>
+      <h1>Settings</h1>
+      <form id="foodPreferencesForm">
+        <div>
+          <label>Excluded Cuisine:</label>
+          <input type="text" id="excludedCuisineInput" />
+          <button type="button" id="addCuisine">Add</button>
+          <ul id="excludedCuisineList"></ul>
+        </div>
 
-    <h1>Settings</h1>
-    <form id="foodPreferencesForm">
-      <div>
-        <label>Excluded Cuisine:</label>
-        <input type="text" id="excludedCuisineInput" />
-        <button type="button" id="addCuisine">Add</button>
-        <ul id="excludedCuisineList"></ul>
-      </div>
+        <div>
+          <label>Excluded Ingredient:</label>
+          <input type="text" id="excludedIngredientInput" />
+          <button type="button" id="addIngredient">Add</button>
+          <ul id="excludedIngredientList"></ul>
+        </div>
 
-      <div>
-        <label>Excluded Ingredient:</label>
-        <input type="text" id="excludedIngredientInput" />
-        <button type="button" id="addIngredient">Add</button>
-        <ul id="excludedIngredientList"></ul>
-      </div>
+        <div>
+          <label>Max Sugar (grams):</label>
+          <input type="number" id="maxSugar" name="maxSugar" />
+        </div>
 
-      <div>
-        <label>Max Sugar (grams):</label>
-        <input type="number" id="maxSugar" name="maxSugar" />
-      </div>
+        <div>
+          <label>Intolerances:</label>
+          <input type="text" id="intoleranceInput" />
+          <button type="button" id="addIntolerance">Add</button>
+          <ul id="intoleranceList"></ul>
+        </div>
 
-      <div>
-        <label>Intolerances:</label>
-        <input type="text" id="intoleranceInput" />
-        <button type="button" id="addIntolerance">Add</button>
-        <ul id="intoleranceList"></ul>
-      </div>
+        <div>
+          <label>Diet:</label>
+          <input type="text" id="dietInput" placeholder="e.g. vegan, paleo" />
+          <button type="button" id="addDiet">Add</button>
+          <ul id="dietList"></ul>
+        </div>
 
-      <div>
-        <label>Diet:</label>
-        <input type="text" id="dietInput" placeholder="e.g. vegan, paleo" />
-        <button type="button" id="addDiet">Add</button>
-        <ul id="dietList"></ul>
-      </div>
-
-      <button type="submit">Submit</button>
-    </form>
+        <button type="submit">Submit</button>
+      </form>
+      </main>
     <script>
       //this shows errors but works 
       const savedPreferences = {{preferences|tojson}};
