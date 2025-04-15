@@ -209,6 +209,11 @@ def bookmark_recipe(recipe_id):
     uid = session.get("uid")
     return "Saving recipe " + str(recipe_id) + " with user " + str(uid)
 
+@app.route('/profile')
+@auth_required
+def profile():
+    return render_template('profile.html')
+
 if __name__ == '__main__':
     app.run(debug=True)
     # app.run(host='0.0.0.0', port=8080)
