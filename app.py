@@ -74,15 +74,22 @@ def auth_required(f):
 @app.route('/auth', methods=['POST'])
 def authorize():
     token = request.headers.get('Authorization')
+
     if not token or not token.startswith('Bearer '):
         return "Unauthorized", 401
 
     token = token[7:]  # Strip off 'Bearer ' to get the actual token
-    print(f"Received token: {token}")
 
     try:
         decoded_token = auth.verify_id_token(token, check_revoked=True, clock_skew_seconds=60) # Validate token here
         session['user'] = decoded_token # Add user to session
+
+        # checking if user is in local database, making them there if not
+        uid = decoded_token['uid']
+        session['uid'] = uid
+        email = decoded_token.get('email')
+        database.check_and_create_user(uid, email)
+
         return redirect(url_for('dashboard'))
     
     except:
@@ -154,6 +161,7 @@ def export_recipe(recipe_id):
 
     return exporter.exportRecipe()
 
+
 @app.route('/login')
 def login():
     if 'user' in session:
@@ -194,6 +202,12 @@ def calendar():
 def dashboard():
     return render_template('dashboard.html')
 
+@app.route('/recipe/<int:recipe_id>/bookmark')
+@auth_required
+def bookmark_recipe(recipe_id):
+    recipe = database.get_recipe(recipe_id)
+    uid = session.get("uid")
+    return "Saving recipe " + str(recipe_id) + " with user " + str(uid)
 
 if __name__ == '__main__':
     app.run(debug=True)
