@@ -57,7 +57,6 @@ taratorRecipe = (
 database.insert_recipe(taratorRecipe)
 
 """ AUTHENTICATION ROUTES """
-
 # Add this to any request needing authentication
 def auth_required(f):
     @wraps(f)
@@ -145,7 +144,9 @@ def recipe(recipe_id):
     if recipe is None:
         recipe=SpoonacularRecipeAdapter(recipe_id)
         recipe=recipe.standardizeRecipe()
-        #return "Recipe not found", 404
+
+    if recipe is None:
+        return "Recipe not found", 404
 
     return render_template("recipe.html", recipe=recipe)
 

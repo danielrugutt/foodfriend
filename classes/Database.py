@@ -5,6 +5,7 @@ from models.IngredientModel import IngredientModel
 from models.RecipeIngredientModel import RecipeIngredientModel
 from models.RecipeListModel import RecipeListModel, RecipeListRecipeModel
 from models.UserModel import UserModel
+from classes.Recipe import RecipeBuilder
 from db import db
 import os
 
@@ -29,6 +30,7 @@ class Database(metaclass=Singleton):
 
 
     def initialize_database(self):
+        """ Imports all tables and makes the database if it doesn't exist """
         os.makedirs("database", exist_ok=True)
 
         with self.app.app_context():
@@ -118,20 +120,23 @@ class Database(metaclass=Singleton):
 
         nutrition_info = Nutrition(0, 0, 0, 0)  # placeholder, maybe attach later
 
-        # this probably has to use the recipe builder later...
-        return Recipe(
-            title=recipe_model.title,
-            ingredients=ingredient_list,
-            steps=recipe_model.get_steps(),
-            cooking_time=recipe_model.cooking_time,
-            nutrition_info=nutrition_info,
-            servings=recipe_model.servings,
-            cuisine=recipe_model.cuisine,
-            diet=recipe_model.get_diet(),
-            intolerances=recipe_model.get_intolerances(),
-            ID=recipe_model.id,
-            img_url=recipe_model
+        recipe = (
+            RecipeBuilder(recipe_model.title)
+            .set_ingredients(ingredient_list)
+            .set_steps(recipe_model.get_steps())
+            .set_cooking_time(recipe_model.cooking_time)
+            .set_nutrition_info(nutrition_info)
+            .set_servings(recipe_model.servings)
+            .set_cuisine(recipe_model.cuisine)
+            .set_diet(recipe_model.get_diet())
+            .set_intolerances(recipe_model.get_intolerances())
+            .set_ID(recipe_model.id)
+            # .set_img_url(recipe_model)
+            .build()
         )
+
+        return recipe
+
 
     def check_and_create_user(self, uid, email):
         """ Given a UID and email, checks if the user exists locally - makes them if no """

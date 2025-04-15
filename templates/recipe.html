@@ -16,6 +16,7 @@
     {% include 'navbar_private.html' %}
     <main>
         <h1>{{ recipe.title }}</h1>
+
             {% if recipe.img_url %}
             <img src ="{{recipe.img_url}}">
             {%endif%}
@@ -66,9 +67,10 @@
         <p><strong>Fats:</strong> {{ recipe.nutrition_info.fats }}g</p> #}
 
 
-    <a href="{{ url_for('export_recipe', recipe_id=recipe.ID, type='email') }}">Share Recipe</a>
-    <a href="{{ url_for('export_recipe', recipe_id=recipe.ID, type='pdf') }}">Download Recipe</a>
+    <a href="{{ url_for('export_recipe', recipe_id=recipe.ID, type='email') }}">Share</a>
+    <a href="{{ url_for('export_recipe', recipe_id=recipe.ID, type='pdf') }}">Download</a>
 
+    <a href="{{ url_for('bookmark_recipe', recipe_id=recipe.ID) }}">Bookmark</a>
 
 
     </main>
