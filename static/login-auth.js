@@ -203,6 +203,22 @@ function loginUser(user, idToken) {
 }
 
 
+// function to delete user account
+function deleteAccount() {
+    const user = auth.currentUser;
+
+    if (user) {
+        user.delete().then(() => {
+            console.log("User account deleted successfully.");
+        }).catch((error) => {
+            console.error("Error deleting user account: ", error);
+        });
+    } else {
+        console.log("No user is currently signed in.");
+    }
+}
+
+
 
 // /* = Functions - UI = */
 function clearInputField(field) {

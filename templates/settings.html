@@ -138,11 +138,29 @@
 
         <button type="submit">Submit</button>
       </form>
-      </main>
+
+      <div id="delete-account-div">
+        <h2>Account Deletion</h2>
+        <p>If you wish to delete your account, please click the button below:</p>
+        <button type="button">Delete Account</button>
+        <p class="warning">This action is irreversible.</p>
+      </div>
+    
+      <div id="deletion-confirmation-div" style="display: none;">
+        <form action="{{ url_for('delete_account') }}" method="POST">
+            <h2>Confirm account deletion</h2>
+            <span>
+                <button type="submit" style="background-color: red;">Delete Account</button>
+                <button id="deletion-cancel-btn">Cancel</button>
+            </span>
+        </form>
+      </div>
+    </main>
     <script>
       //this shows errors but works 
       const savedPreferences = {{preferences|tojson}};
     </script>
     <script src="../static/dietary_preference.js"></script>
+    <script src="../static/delete-account.js"></script>
   </body>
 </html>
