@@ -8,6 +8,17 @@ document.addEventListener("DOMContentLoaded", () => {
     deleteAccountButton.addEventListener("click", () => {
         deleteAccountDiv.style.display = "none";
         deletionConfirmationDiv.style.display = "block";
+
+        // Set a countdown to switch back after 5 seconds
+        const timeoutId = setTimeout(() => {
+            deletionConfirmationDiv.style.display = "none";
+            deleteAccountDiv.style.display = "block";
+        }, 5000);
+
+        // Cancel the timeout if the user interacts with the confirmation div
+        deletionConfirmationDiv.addEventListener("click", () => {
+            clearTimeout(timeoutId);
+        }, { once: true });
     });
 
     // Cancel button to go back to the initial state
