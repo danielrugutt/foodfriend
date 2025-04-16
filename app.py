@@ -57,7 +57,6 @@ taratorRecipe = (
 database.insert_recipe(taratorRecipe)
 
 """ AUTHENTICATION ROUTES """
-
 # Add this to any request needing authentication
 def auth_required(f):
     @wraps(f)
@@ -74,15 +73,22 @@ def auth_required(f):
 @app.route('/auth', methods=['POST'])
 def authorize():
     token = request.headers.get('Authorization')
+
     if not token or not token.startswith('Bearer '):
         return "Unauthorized", 401
 
     token = token[7:]  # Strip off 'Bearer ' to get the actual token
-    print(f"Received token: {token}")
 
     try:
         decoded_token = auth.verify_id_token(token, check_revoked=True, clock_skew_seconds=60) # Validate token here
         session['user'] = decoded_token # Add user to session
+
+        # checking if user is in local database, making them there if not
+        uid = decoded_token['uid']
+        session['uid'] = uid
+        email = decoded_token.get('email')
+        database.check_and_create_user(uid, email)
+
         return redirect(url_for('dashboard'))
     
     except:
@@ -152,6 +158,7 @@ def export_recipe(recipe_id):
 
     return exporter.exportRecipe()
 
+
 @app.route('/login')
 def login():
     if 'user' in session:
@@ -192,6 +199,43 @@ def calendar():
 def dashboard():
     return render_template('dashboard.html')
 
+
+@app.route('/recipe/<int:recipe_id>/bookmark/')
+@auth_required
+def bookmark(recipe_id):
+    recipe = database.get_recipe(recipe_id)
+
+    if recipe is None:
+        recipe=SpoonacularRecipeAdapter(recipe_id)
+        recipe=recipe.standardizeRecipe()
+
+    if recipe is None:
+        return "Recipe not found", 404
+
+    uid = session.get("uid")
+    database.add_recipe_to_list(uid, recipe_id)
+    return "Saving recipe " + str(recipe_id) + " with user " + str(uid) + " to bookmarks"
+
+@app.route('/recipe/<int:recipe_id>/bookmark/<int:list_id>')
+@auth_required
+def add_to_list(recipe_id, list_id):
+    recipe = database.get_recipe(recipe_id)
+
+    if recipe is None:
+        recipe=SpoonacularRecipeAdapter(recipe_id)
+        recipe=recipe.standardizeRecipe()
+
+    if recipe is None:
+        return "Recipe not found", 404
+
+    uid = session.get("uid")
+    database.add_recipe_to_list(uid, recipe_id, list_id)
+    return "Saving recipe " + str(recipe_id) + " with user " + str(uid) + " to list " + str(list_id)
+
+@app.route('/profile')
+@auth_required
+def profile():
+    return render_template('profile.html')
 
 if __name__ == '__main__':
     app.run(debug=True)

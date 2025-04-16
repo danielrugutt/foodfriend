@@ -13,7 +13,7 @@ const signUpWithGoogleButtonEl = document.getElementById("sign-up-with-google-bt
 const emailInputEl = document.getElementById("email-input")
 const passwordInputEl = document.getElementById("password-input")
 const signInButtonEl = document.getElementById("sign-in-btn")
-const createAccountButtonEl = document.getElementById("create-account-btn")
+const createAccountButtonEl = document.getElementById("signup-form")
 const emailForgotPasswordEl = document.getElementById("email-forgot-password")
 const forgotPasswordButtonEl = document.getElementById("forgot-password-btn")
 
@@ -22,26 +22,15 @@ const errorMsgPassword = document.getElementById("password-error-message")
 const errorMsgGoogleSignIn = document.getElementById("google-signin-error-message")
 
 
-
 /* == UI - Event Listeners == */
-if (signInWithGoogleButtonEl && signInButtonEl) {
-    signInWithGoogleButtonEl.addEventListener("click", authSignInWithGoogle)
-    signInButtonEl.addEventListener("click", authSignInWithEmail)
-}
-
-if (createAccountButtonEl) {
-    createAccountButtonEl.addEventListener("click", authCreateAccountWithEmail)
-}
-
-if (signUpWithGoogleButtonEl) {
-    signUpWithGoogleButtonEl.addEventListener("click", authSignUpWithGoogle)
-}
-
-if (forgotPasswordButtonEl) {
-    forgotPasswordButtonEl.addEventListener("click", resetPassword)
-}
-
-
+signInWithGoogleButtonEl && signInWithGoogleButtonEl.addEventListener("click", authSignInWithGoogle);
+signInButtonEl           && signInButtonEl.addEventListener("click", authSignInWithEmail);
+signUpWithGoogleButtonEl && signUpWithGoogleButtonEl.addEventListener("click", authSignUpWithGoogle);
+forgotPasswordButtonEl   && forgotPasswordButtonEl.addEventListener("click", resetPassword);
+createAccountButtonEl    && createAccountButtonEl.addEventListener("submit", (e) => {
+    e.preventDefault();
+    authCreateAccountWithEmail();
+});
 
 
 /* === Main Code === */
@@ -138,39 +127,33 @@ function authSignInWithEmail() {
 }
 
 
+async function authCreateAccountWithEmail() {
+    try {
+        const email = emailInputEl.value;
+        const password = passwordInputEl.value;
 
-function authCreateAccountWithEmail() {
+        // Create user and wait for Firebase to complete the operation
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
 
-    const email = emailInputEl.value
-    const password = passwordInputEl.value
+        // Add user to Firestore (wait for it to finish)
+        // await addNewUserToFirestore(user);
 
-    createUserWithEmailAndPassword(auth, email, password)
-        .then(async (userCredential) => {
-            // Signed in 
-            
-            const user = userCredential.user;
+        console.log("User successfully created and logged in:", user);
 
-            await addNewUserToFirestore(user)
-            setTimeout(100)
-
-            user.getIdToken().then(function(idToken) {
-                loginUser(user, idToken)
-            });
-
-        })
-        .catch((error) => {
-            const errorCode = error.code;
-
-            if (errorCode === "auth/invalid-email") {
-                errorMsgEmail.textContent = "Invalid email"
-            } else if (errorCode === "auth/weak-password") {
-                errorMsgPassword.textContent = "Invalid password - must be at least 6 characters"
-            } else if (errorCode === "auth/email-already-in-use") {
-                errorMsgEmail.textContent = "An account already exists for this email."
-            }
-
-        });
-
+    } catch (error) {
+        // Handle errors properly
+        if (error.code === "auth/invalid-email") {
+            errorMsgEmail.textContent = "Invalid email";
+        } else if (error.code === "auth/weak-password") {
+            errorMsgPassword.textContent = "Password must be at least 6 characters";
+        } else if (error.code === "auth/email-already-in-use") {
+            errorMsgEmail.textContent = "An account already exists for this email.";
+        } else {
+            console.error("Error:", error.message);
+            alert(error.message);
+        }
+    }
 }
 
 
@@ -188,14 +171,11 @@ function resetPassword() {
 
         resetFormView.style.display = "none"
         resetSuccessView.style.display = "block"
-
     })
     .catch((error) => {
         const errorCode = error.code;
-        const errorMessage = error.message;
- 
+        alert("Error sending reset email: ", errorCode);
     });
-
 }
 
 
