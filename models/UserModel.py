@@ -9,5 +9,5 @@ class UserModel(db.Model):
 
     recipe_lists = db.relationship("RecipeListModel", back_populates="user", cascade="all, delete-orphan")
     # mealhistory
-    # preferences
+    preferences = db.relationship("DietaryPreferenceModel", back_populates="user", cascade="all, delete-orphan")
 
