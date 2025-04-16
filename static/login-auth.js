@@ -203,7 +203,6 @@ function loginUser(user, idToken) {
 }
 
 
-
 // /* = Functions - UI = */
 function clearInputField(field) {
 	field.value = ""
