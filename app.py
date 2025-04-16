@@ -241,6 +241,19 @@ def add_to_list(recipe_id, list_id):
 def profile():
     return render_template('profile.html')
 
+@app.route('/delete-account', methods=['POST'])
+@auth_required
+def delete_account():
+    uid = session.get("uid")
+    try:
+        # Delete the user using Firebase Admin SDK
+        auth.delete_user(uid)
+        session.pop('user', None)  # Remove user from session
+        response = make_response(redirect(url_for('login')))
+        return response
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 if __name__ == '__main__':
     app.run(debug=True)
     # app.run(host='0.0.0.0', port=8080)

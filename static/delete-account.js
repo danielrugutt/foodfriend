@@ -3,6 +3,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const deletionConfirmationDiv = document.getElementById("deletion-confirmation-div");
     const deleteAccountButton = deleteAccountDiv.querySelector("button");
     const cancelButton = document.getElementById("deletion-cancel-btn");
+    const confirmDeleteButton = document.getElementById("confirm-delete-btn");
 
     // Show confirmation div and hide the initial div
     deleteAccountButton.addEventListener("click", () => {
@@ -26,5 +27,26 @@ document.addEventListener("DOMContentLoaded", () => {
         e.preventDefault();
         deletionConfirmationDiv.style.display = "none";
         deleteAccountDiv.style.display = "block";
+    });
+
+    // Confirm delete button to send a POST request to the server
+    confirmDeleteButton.addEventListener("click", async (e) => {
+        e.preventDefault();
+        try {
+            const response = await fetch("/delete-account", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            });
+
+            if (response.ok) {
+                window.location.href = "/login"; // Redirect to login page
+            } else {
+                console.error("Failed to delete account");
+            }
+        } catch (error) {
+            console.error("Error:", error);
+        }
     });
 });
