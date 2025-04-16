@@ -136,7 +136,6 @@ def settings():
         print(data)
     return render_template("settings.html",preferences=user_preferences) 
 
- 
 @app.route('/recipe/<int:recipe_id>')
 def recipe(recipe_id):
     recipe = database.get_recipe(recipe_id)
@@ -144,15 +143,23 @@ def recipe(recipe_id):
     if recipe is None:
         spoonacular_connection=SpoonacularConnection()
         recipe=spoonacular_connection.getRecipe(recipe_id)
-        #return "Recipe not found", 404
+
+    if recipe is None:
+        return "Recipe not found", 404
+
     return render_template("recipe.html", recipe=recipe)
 
 @app.route('/recipe/<int:recipe_id>/export', methods=['GET'])
 def export_recipe(recipe_id):
     recipe = database.get_recipe(recipe_id)
+
     if recipe is None:
         spoonacular_connection=SpoonacularConnection()
         recipe=spoonacular_connection.getRecipe(recipe_id)
+
+    if recipe is None:
+        return "Recipe not found", 404
+
     export_type = request.args.get('type')
     exporter = FactoryMethod.create_exporter(recipe, export_type)
 
@@ -206,8 +213,8 @@ def bookmark(recipe_id):
     recipe = database.get_recipe(recipe_id)
 
     if recipe is None:
-        recipe=SpoonacularRecipeAdapter(recipe_id)
-        recipe=recipe.standardizeRecipe()
+        spoonacular_connection=SpoonacularConnection()
+        recipe=spoonacular_connection.getRecipe(recipe_id)
 
     if recipe is None:
         return "Recipe not found", 404
@@ -216,14 +223,15 @@ def bookmark(recipe_id):
     database.add_recipe_to_list(uid, recipe_id)
     return "Saving recipe " + str(recipe_id) + " with user " + str(uid) + " to bookmarks"
 
+# this is duplication of the above method, will try to fix it later
 @app.route('/recipe/<int:recipe_id>/bookmark/<int:list_id>')
 @auth_required
 def add_to_list(recipe_id, list_id):
     recipe = database.get_recipe(recipe_id)
 
     if recipe is None:
-        recipe=SpoonacularRecipeAdapter(recipe_id)
-        recipe=recipe.standardizeRecipe()
+        spoonacular_connection=SpoonacularConnection()
+        recipe=spoonacular_connection.getRecipe(recipe_id)
 
     if recipe is None:
         return "Recipe not found", 404
