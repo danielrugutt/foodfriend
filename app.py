@@ -6,7 +6,7 @@ from datetime import timedelta
 from dotenv import load_dotenv
 from typing import List
 from classes.DietaryPreference import DietaryPreference
-from classes.Search import Search
+from classes.SpoonacularConnection import SpoonacularConnection
 from classes.SpoonacularRecipeAdapter import SpoonacularRecipeAdapter
 from classes.Recipe import *
 from classes.Exporter import *
@@ -109,8 +109,8 @@ def search():
          search_query = request.args.get('search_query') # For GET requests
     #read from seach bar, search bar is what directs to /search
     user_diet=test_user
-    user_search=Search(user_diet)
-    response=user_search.search(search_query)
+    user_search=SpoonacularConnection()
+    response=user_search.getSearchResults(search_query,test_user)
 
     if 'results' in response:
         for recipe in response['results']:
@@ -136,14 +136,13 @@ def settings():
         print(data)
     return render_template("settings.html",preferences=user_preferences) 
 
- 
 @app.route('/recipe/<int:recipe_id>')
 def recipe(recipe_id):
     recipe = database.get_recipe(recipe_id)
 
     if recipe is None:
-        recipe=SpoonacularRecipeAdapter(recipe_id)
-        recipe=recipe.standardizeRecipe()
+        spoonacular_connection=SpoonacularConnection()
+        recipe=spoonacular_connection.getRecipe(recipe_id)
 
     if recipe is None:
         return "Recipe not found", 404
@@ -153,9 +152,13 @@ def recipe(recipe_id):
 @app.route('/recipe/<int:recipe_id>/export', methods=['GET'])
 def export_recipe(recipe_id):
     recipe = database.get_recipe(recipe_id)
+
     if recipe is None:
-        recipe=SpoonacularRecipeAdapter(recipe_id)
-        recipe=recipe.standardizeRecipe()
+        spoonacular_connection=SpoonacularConnection()
+        recipe=spoonacular_connection.getRecipe(recipe_id)
+
+    if recipe is None:
+        return "Recipe not found", 404
 
     export_type = request.args.get('type')
     exporter = FactoryMethod.create_exporter(recipe, export_type)
@@ -210,8 +213,8 @@ def bookmark(recipe_id):
     recipe = database.get_recipe(recipe_id)
 
     if recipe is None:
-        recipe=SpoonacularRecipeAdapter(recipe_id)
-        recipe=recipe.standardizeRecipe()
+        spoonacular_connection=SpoonacularConnection()
+        recipe=spoonacular_connection.getRecipe(recipe_id)
 
     if recipe is None:
         return "Recipe not found", 404
@@ -220,14 +223,15 @@ def bookmark(recipe_id):
     database.add_recipe_to_list(uid, recipe_id)
     return "Saving recipe " + str(recipe_id) + " with user " + str(uid) + " to bookmarks"
 
+# this is duplication of the above method, will try to fix it later
 @app.route('/recipe/<int:recipe_id>/bookmark/<int:list_id>')
 @auth_required
 def add_to_list(recipe_id, list_id):
     recipe = database.get_recipe(recipe_id)
 
     if recipe is None:
-        recipe=SpoonacularRecipeAdapter(recipe_id)
-        recipe=recipe.standardizeRecipe()
+        spoonacular_connection=SpoonacularConnection()
+        recipe=spoonacular_connection.getRecipe(recipe_id)
 
     if recipe is None:
         return "Recipe not found", 404

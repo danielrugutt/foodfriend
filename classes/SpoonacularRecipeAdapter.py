@@ -7,23 +7,9 @@ import time
 class SpoonacularRecipeAdapter(RecipeAdapter):
     def __init__(self, spoonacularID):
         self.ID=spoonacularID
-        self.api_key=os.getenv("SPOON_API_KEY")
-        self.recipe_address=f"https://api.spoonacular.com/recipes/{spoonacularID}/information"
-        self.instruction_address=f"https://api.spoonacular.com/recipes/{spoonacularID}/analyzedInstructions"
-        self.query_payload={'apiKey':self.api_key}
                             
-    def standardizeRecipe(self):
-        recipe_info=requests.get(self.recipe_address,self.query_payload)
-        recipe_info=recipe_info.json()
-        print(recipe_info)
-
-        #spoonacular API limit
-        time.sleep(1.5)
-
-
+    def standardizeRecipe(self, recipe_info, steps_info):
         try:
-            steps_info=requests.get(self.instruction_address,self.query_payload)
-            steps_info=steps_info.json()
             recipe = RecipeBuilder(recipe_info['title'])
             recipe.set_ID(self.ID)
             recipe.set_servings(recipe_info['servings'])
@@ -40,10 +26,9 @@ class SpoonacularRecipeAdapter(RecipeAdapter):
                 steps.append(step['step'])
                 #print(step['step'])
             recipe.set_steps(steps)
+
             recipe=recipe.build()
             return recipe
 
         except:
             return None
-
-
