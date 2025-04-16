@@ -33,6 +33,8 @@ class EmailExporter(Exporter):
 
         email_body = [
             self.recipe.title,
+            "Cooking time: " + str(self.recipe.cooking_time),
+            "Servings: " + str(self.recipe.servings),
             "",
             "Ingredients needed:"
         ]
@@ -64,11 +66,17 @@ class PDFExporter(Exporter):
         pdf = FPDF("P", "in", "Letter")
         pdf.add_page()
         pdf.set_font("Courier", size=16)
-        pdf.cell(0, 0.5, self.recipe.title)
+        pdf.cell(0, 0.5, self.recipe.title) # try to find a way to bold this
+        pdf.ln(0.5)
+
+        # cooking time, servings
+        pdf.set_font("Courier", size=12)
+        pdf.cell(0, 0.3, "Cooking time: " + str(self.recipe.cooking_time) + " minutes")
         pdf.ln(0.3)
+        pdf.cell(0, 0.3, "Servings: " +  str(self.recipe.servings))
+        pdf.ln(0.6)
 
         # ingredients
-        pdf.set_font("Courier", size=12)
         pdf.cell(0, 0.3, "Ingredients")
         pdf.ln(0.3)
         for ingredient in self.recipe.ingredients:
