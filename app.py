@@ -44,6 +44,8 @@ firestore_db = firestore.client()
 database = Database(app)
 db = database.initialize_database()
 
+
+##### ALL TESTING STUFF, TO BE REMOVED AT A LATER DATE ######
 #test user only
 test_user=DietaryPreference(["greek"],["paprika"],["200"],["Peanut"],["vegetarian"] )
 
@@ -62,12 +64,6 @@ taratorRecipe = (
 )
 
 database.insert_recipe(taratorRecipe)
-
-def get_current_user():
-    uid = session.get("uid")
-    if not uid:
-        return None
-    return UserModel.query.filter_by(firebase_uid=uid).first()
 
 @app.route('/test-setup')
 def test_setup():
@@ -105,6 +101,24 @@ def test_setup():
     session['user'] = { "uid": test_uid, "email": "test@example.com" }
 
     return "Test data created and session set!"
+
+##### TESTING SECTION ENDS HERE #####
+
+def get_current_user():
+    uid = session.get("uid")
+    if not uid:
+        return None
+    return UserModel.query.filter_by(firebase_uid=uid).first()
+
+def get_recipe(recipe_id):
+    recipe = database.get_recipe(recipe_id)
+
+    if recipe is None:
+        spoon = SpoonacularConnection()
+        recipe = spoon.getRecipe(recipe_id)
+        database.insert_recipe(recipe)
+
+    return recipe
 
 
 """ AUTHENTICATION ROUTES """
@@ -189,24 +203,21 @@ def settings():
 
 @app.route('/recipe/<int:recipe_id>')
 def recipe(recipe_id):
-    recipe = database.get_recipe(recipe_id)
-
-    if recipe is None:
-        spoonacular_connection=SpoonacularConnection()
-        recipe=spoonacular_connection.getRecipe(recipe_id)
+    recipe = get_recipe(recipe_id)
 
     if recipe is None:
         return "Recipe not found", 404
 
-    return render_template("recipe.html", recipe=recipe)
+    uid = session.get("uid")
+    user_lists = []
+    if uid:
+        user_lists = RecipeListModel.query.filter_by(user_id=uid).all()
+
+    return render_template("recipe.html", recipe=recipe, user_lists=user_lists)
 
 @app.route('/recipe/<int:recipe_id>/export', methods=['GET'])
 def export_recipe(recipe_id):
-    recipe = database.get_recipe(recipe_id)
-
-    if recipe is None:
-        spoonacular_connection=SpoonacularConnection()
-        recipe=spoonacular_connection.getRecipe(recipe_id)
+    recipe = get_recipe(recipe_id)
 
     if recipe is None:
         return "Recipe not found", 404
@@ -249,29 +260,6 @@ def logout():
 @app.route('/calendar')
 def calendar():
     return render_template('calendar.html')
-
-
-
-
-@app.route('/api/bookmarked-recipes')
-def get_bookmarked_recipes():
-    print("Hit /api/bookmarked-recipes")
-
-    test_user_id = session.get("uid")
-    if not test_user_id:
-        return redirect('/login')
-
-    user = db.session.query(UserModel).filter_by(id=test_user_id).first()
-    if not user:
-        return jsonify([])
-
-    recipes = user.bookmarked_recipes
-    return jsonify([{
-        'id': r.id,
-        'name': r.name,
-        # Add other fields if needed
-    } for r in recipes])
-
 
 
 @app.route('/api/add-meal', methods=['POST'])
@@ -340,40 +328,32 @@ def get_planned_meals():
 
     return jsonify(events)
 
-
-
-@app.route('/recipe/<int:recipe_id>/bookmark/')
+@app.route('/recipe/<int:recipe_id>/bookmark', methods=["POST"])
 @auth_required
-def bookmark(recipe_id):
-    recipe = database.get_recipe(recipe_id)
+def save_to_list(recipe_id):
+    uid = session.get("uid")
+    list_id = request.form.get("list_id")
+    new_list_name = request.form.get("new_list_name")
 
-    if recipe is None:
-        spoonacular_connection=SpoonacularConnection()
-        recipe=spoonacular_connection.getRecipe(recipe_id)
-
+    recipe = get_recipe(recipe_id)
     if recipe is None:
         return "Recipe not found", 404
 
-    uid = session.get("uid")
-    database.add_recipe_to_list(uid, recipe_id)
-    return "Saving recipe " + str(recipe_id) + " with user " + str(uid) + " to bookmarks"
+    # Handle new list creation
+    if list_id == "new" and new_list_name:
+        list_id = database.create_named_list(uid, new_list_name)
 
-# this is duplication of the above method, will try to fix it later
-@app.route('/recipe/<int:recipe_id>/bookmark/<int:list_id>')
-@auth_required
-def add_to_list(recipe_id, list_id):
-    recipe = database.get_recipe(recipe_id)
-
-    if recipe is None:
-        spoonacular_connection=SpoonacularConnection()
-        recipe=spoonacular_connection.getRecipe(recipe_id)
-
-    if recipe is None:
-        return "Recipe not found", 404
-
-    uid = session.get("uid")
     database.add_recipe_to_list(uid, recipe_id, list_id)
-    return "Saving recipe " + str(recipe_id) + " with user " + str(uid) + " to list " + str(list_id)
+    return f"Saved recipe {recipe_id} to list {list_id}"
+
+
+@app.route('/lists')
+@auth_required
+def view_list():
+    uid = session.get("uid")
+    user_lists = RecipeListModel.query.filter_by(user_id=uid).all()
+    return render_template("lists.html", lists=user_lists)
+
 
 @app.route('/profile')
 @auth_required

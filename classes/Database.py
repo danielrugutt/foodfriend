@@ -92,6 +92,10 @@ class Database(metaclass=Singleton):
             intolerances=recipe_object.intolerances
         )
 
+        if recipe_object.ID:
+            recipe_model.id = recipe_object.ID
+
+
         for ingredient in recipe_object.ingredients:
             found_ingredient = self.get_ingredient(ingredient.name)
 
@@ -192,6 +196,13 @@ class Database(metaclass=Singleton):
                 db.session.add(join_model)
                 db.session.commit()
 
+
+    def create_named_list(self, uid, list_name):
+        with self.app.app_context():
+            new_list = RecipeListModel(name=list_name, user_id=uid)
+            db.session.add(new_list)
+            db.session.commit()
+            return new_list.id
 
 
 

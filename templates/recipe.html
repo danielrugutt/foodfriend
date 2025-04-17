@@ -69,9 +69,23 @@
 
     <a href="{{ url_for('export_recipe', recipe_id=recipe.ID, type='email') }}">Share</a>
     <a href="{{ url_for('export_recipe', recipe_id=recipe.ID, type='pdf') }}">Download</a>
+    <br><br><br>
 
-    <a href="{{ url_for('bookmark', recipe_id=recipe.ID) }}">Bookmark</a>
-    <a href="{{ url_for('add_to_list', recipe_id=recipe.ID, list_id=0) }}">Add to list</a>
+    {% if user_lists %}
+        <form action="{{ url_for('save_to_list', recipe_id=recipe.ID) }}" method="POST">
+            <label for="list_id">Add to:</label>
+            <select name="list_id">
+            {% for lst in user_lists %}
+                <option value="{{ lst.id }}">{{ lst.name }}</option>
+            {% endfor %}
+            <option value="new">Create new list</option>
+            </select>
+            <input type="text" name="new_list_name" placeholder="New list name (if creating)">
+            <button type="submit">Save</button>
+        </form>
+    {% endif %}
+
+
 
 
     </main>
