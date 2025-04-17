@@ -1,3 +1,4 @@
+from models import DietaryPreferenceModel
 from db import db
 from models import DietaryPreferenceModel
 from models import PlannedMeal
