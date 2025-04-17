@@ -108,7 +108,7 @@ def get_current_user():
     uid = session.get("uid")
     if not uid:
         return None
-    return UserModel.query.filter_by(firebase_uid=uid).first()
+    return UserModel.query.filter_by(id=uid).first()
 
 def get_recipe(recipe_id):
     recipe = database.get_recipe(recipe_id)
