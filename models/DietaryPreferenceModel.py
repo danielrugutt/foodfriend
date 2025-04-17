@@ -9,5 +9,7 @@ class DietaryPreferenceModel(db.Model):
     intolerances=db.Column(db.String, nullable=True)
     diets=db.Column(db.String, nullable=True)
 
-"""Define methods here"""
+    user_id = db.Column(db.String, db.ForeignKey('User.id'), nullable=False, unique=True)
+    user = db.relationship("UserModel", back_populates="dietary_preferences")
+
 
