@@ -1,5 +1,6 @@
 from db import db
 from models.RecipeIngredientModel import RecipeIngredientModel
+from models import PlannedMeal
 import json
 
 class RecipeModel(db.Model):
@@ -15,6 +16,9 @@ class RecipeModel(db.Model):
     steps = db.Column(db.LargeBinary)
     diet = db.Column(db.LargeBinary)
     intolerances = db.Column(db.LargeBinary)
+
+    # Define the reverse relationship to PlannedMeal
+    plannedmeals = db.relationship("PlannedMeal", back_populates="recipe", cascade="all, delete-orphan")
 
     def __init__(self, title, cooking_time, servings, cuisine, steps, diet, intolerances):
         self.title = title

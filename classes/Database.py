@@ -39,6 +39,8 @@ class Database(metaclass=Singleton):
             from models.RecipeIngredientModel import RecipeIngredientModel
             from models.UserModel import UserModel
             from models.RecipeListModel import RecipeListModel, RecipeListRecipeModel
+            from models.DietaryPreferenceModel import DietaryPreferenceModel
+            from models.PlannedMeal import PlannedMeal
             db.create_all()
 
         return db

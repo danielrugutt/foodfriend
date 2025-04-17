@@ -6,8 +6,12 @@
     <!-- FullCalendar CSS -->
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet" />
 
+
     <!-- FullCalendar JS (global build) -->
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+
+
+
 
 
 
@@ -27,11 +31,37 @@
     <h1>Meal Planner Calendar</h1>
     <div id="calendar"></div>
 
+
     <script>
-      document.addEventListener('DOMContentLoaded', function () {
+
+
+    document.addEventListener('DOMContentLoaded', function () {
         var calendarEl = document.getElementById('calendar');
+        var bookmarkedRecipes = [];
+
+
+        fetch('/api/bookmarked-recipes')
+          .then(response => response.json())
+          .then(data => {
+            if (!Array.isArray(data)) {
+              console.error("Unexpected data format from /api/bookmarked-recipes:", data);
+              return;
+            }
+
+            bookmarkedRecipes = data; // 🔥 This stores your fetched recipes for later use
+            // Continue safely here
+            const recipeOptions = data.map(recipe => `<option value="${recipe.id}">${recipe.name}</option>`).join('');
+            console.log("Bookmarked recipes:", recipeOptions);
+            // Use these in your UI as needed
+          })
+          .catch(err => console.error("Fetch failed:", err));
+
+
+
+
         var calendar = new FullCalendar.Calendar(calendarEl, {
           initialView: 'dayGridMonth',
+          events: '/api/planned-meals',
           editable: true,
           selectable: true,
           headerToolbar: {
@@ -40,19 +70,62 @@
             right: 'dayGridMonth,timeGridWeek,timeGridDay'
           },
           dateClick: function (info) {
-            const meal = prompt('Enter meal name:');
-            if (meal) {
-              calendar.addEvent({
-                title: meal,
-                start: info.dateStr,
-                allDay: true
+            const mealName = prompt("Enter a custom meal title:");
+            const notes = prompt("Any notes for this meal?");
+            if (!mealName) return;
+
+
+            const recipeOptions = bookmarkedRecipes.map(r => `${r.id}: ${r.name}`).join('\n');
+            const recipeId = prompt(`Choose a recipe ID:\n${recipeOptions}`);
+            const selectedRecipe = bookmarkedRecipes.find(r => r.id == recipeId);
+            if (!selectedRecipe) return alert("Invalid recipe selected!");
+
+
+            const time = prompt('Start time (HH:MM, 24hr format):');
+            if (!time) return;
+
+
+            const startDateTime = info.dateStr + 'T' + time + ':00';
+            const endHour = (parseInt(time.split(':')[0]) + 1).toString().padStart(2, '0');
+            const endDateTime = info.dateStr + 'T' + endHour + ':' + time.split(':')[1] + ':00';
+
+
+            fetch('/api/add-meal', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                title: mealName,
+                recipe_id: parseInt(recipeId),
+                start: startDateTime,
+                notes: notes
+              })
+            })
+            .then(res => res.json())
+            .then(events => {
+              calendar.removeAllEvents();
+              events.forEach(event => {
+                calendar.addEvent(event);
               });
-            }
+
+
+
+
+            });
           }
         });
 
+        fetch('/api/planned-meals')
+          .then(response => response.json())
+          .then(events => {
+            events.forEach(event => calendar.addEvent(event));
+          })
+          .catch(err => console.error("Failed to load planned meals:", err));
+
+
+
         calendar.render();
       });
+   
     </script>
   </body>
 </html>

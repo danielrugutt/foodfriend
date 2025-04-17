@@ -2,7 +2,7 @@ from flask import Flask, redirect, render_template, request, make_response, sess
 from flask_sqlalchemy import SQLAlchemy
 from functools import wraps
 from firebase_admin import credentials, firestore, auth
-from datetime import timedelta
+from datetime import datetime,timedelta, time
 from dotenv import load_dotenv
 from typing import List
 from classes.DietaryPreference import DietaryPreference
@@ -11,6 +11,13 @@ from classes.SpoonacularRecipeAdapter import SpoonacularRecipeAdapter
 from classes.Recipe import *
 from classes.Exporter import *
 from classes.Database import Database
+from models.UserModel import UserModel
+from models.DietaryPreferenceModel import DietaryPreferenceModel
+from models.IngredientModel import IngredientModel
+from models.PlannedMeal import PlannedMeal
+from models.RecipeIngredientModel import RecipeIngredientModel
+from models.RecipeListModel import RecipeListModel
+from models.RecipeModel import RecipeModel
 import secrets
 import os
 import sys
@@ -55,6 +62,50 @@ taratorRecipe = (
 )
 
 database.insert_recipe(taratorRecipe)
+
+def get_current_user():
+    uid = session.get("uid")
+    if not uid:
+        return None
+    return UserModel.query.filter_by(firebase_uid=uid).first()
+
+@app.route('/test-setup')
+def test_setup():
+    # 1. Create sample user
+    test_uid = "test-user-123"
+    user = UserModel.query.filter_by(id=test_uid).first()
+    if not user:
+        user = UserModel(id=test_uid, name="Noah", email="test@example.com")
+        db.session.add(user)
+    
+    # 2. Create sample recipe
+    recipe = RecipeModel.query.filter_by(title="Test Pasta").first()
+    if not recipe:
+        recipe = RecipeModel(title="Test Pasta", cooking_time=20, servings=4, cuisine="Italian")
+        db.session.add(recipe)
+
+    # 3. Bookmark the recipe
+    if recipe not in user.bookmarked_recipes:
+        user.bookmarked_recipes.append(recipe)
+
+    # 4. Add a planned meal
+    planned_meal = PlannedMeal(
+        user=user,
+        recipe=recipe,
+        title="Lunch: Test Pasta",
+        datetime=datetime.now(),
+        notes="Just testing calendar"
+    )
+    db.session.add(planned_meal)
+
+    db.session.commit()
+
+    # Simulate login
+    session['uid'] = test_uid
+    session['user'] = { "uid": test_uid, "email": "test@example.com" }
+
+    return "Test data created and session set!"
+
 
 """ AUTHENTICATION ROUTES """
 # Add this to any request needing authentication
@@ -200,11 +251,95 @@ def calendar():
     return render_template('calendar.html')
 
 
+
+
+@app.route('/api/bookmarked-recipes')
+def get_bookmarked_recipes():
+    print("Hit /api/bookmarked-recipes")
+
+    test_user_id = session.get("uid")
+    if not test_user_id:
+        return redirect('/login')
+
+    user = db.session.query(UserModel).filter_by(id=test_user_id).first()
+    if not user:
+        return jsonify([])
+
+    recipes = user.bookmarked_recipes
+    return jsonify([{
+        'id': r.id,
+        'name': r.name,
+        # Add other fields if needed
+    } for r in recipes])
+
+
+
+@app.route('/api/add-meal', methods=['POST'])
+def add_meal():
+    data = request.json
+    title = data['title']
+    recipe_id = data['recipe_id']
+    start = data['start']  # ISO 8601 string: "2025-04-14T12:00:00"
+
+
+    day = datetime.strptime(start.split('T')[0], "%Y-%m-%d").date()
+    time_str = start.split('T')[1][:5]
+    time_obj = datetime.strptime(time_str, "%H:%M").time()
+
+
+    user = get_current_user()  # However you're managing sessions
+    recipe = db.session.get(RecipeModel, recipe_id)
+    if not recipe or recipe not in user.bookmarked_recipes:
+        return jsonify({"error": "Invalid recipe"}), 400
+
+
+    new_meal = PlannedMeal(
+        user_id=user.id,
+        recipe_id=recipe_id,
+        title=title,
+        day=day,
+        time=time_obj
+    )
+    db.session.add(new_meal)
+    db.session.commit()
+
+
+    return jsonify({"message": "Meal added"}), 201
+
+
+
 """ LOGGED IN USER ROUTES """
 @app.route('/dashboard')
 @auth_required
 def dashboard():
     return render_template('dashboard.html')
+
+@app.route('/api/planned-meals')
+@auth_required
+def get_planned_meals():
+    user = get_current_user()
+    if not user:
+        return jsonify({"error": "User not authenticated"}), 401
+
+    meals = PlannedMeal.query.filter_by(user_id=user.id).all()
+
+    events = []
+    for meal in meals:
+        start_dt = meal.datetime
+        end_dt = start_dt + timedelta(hours=1)
+
+        events.append({
+            "title": f"{meal.title} ({meal.recipe.name})",
+            "start": start_dt.isoformat(),
+            "end": end_dt.isoformat(),
+            "extendedProps": {
+                "recipe_id": meal.recipe.id,
+                "notes": meal.notes or ""
+            }
+        })
+
+    return jsonify(events)
+
 
 
 @app.route('/recipe/<int:recipe_id>/bookmark/')
