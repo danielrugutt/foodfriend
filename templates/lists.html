@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" >
+
+  <title>Lists</title>
+  </head>
+  <body>
+    {% include 'navbar_private.html' %}
+    <main>
+      <h1>Lists</h1>
+        <ul>
+        {% for lst in lists %}
+            <li>
+            <strong>{{ lst.name }}</strong>
+            <ul>
+                {% for recipe in lst.recipe_objects() %}
+                <li><a href="{{ url_for('recipe', recipe_id=recipe.id) }}">{{ recipe.title }}</a></li>
+                {% endfor %}
+            </ul>
+            </li>
+        {% endfor %}
+        </ul>
+    </main>
+    <script src="{{ url_for('static', filename='scripts.js') }}" type="module"></script>
+  </body>
+
+</html>

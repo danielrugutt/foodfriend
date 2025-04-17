@@ -43,7 +43,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const output = document.getElementById(outputId);
       output.innerHTML = list
         .map(
-          item => `<li>${item} <button type="button" class="removeBtn" data-value="${item}" data-list="${outputId}">❌</button></li>`
+          item => `<li class="preference">${item} <button type="button" class="removeBtn" data-value="${item}" data-list="${outputId}">❌</button></li>`
         )
         .join('');
       

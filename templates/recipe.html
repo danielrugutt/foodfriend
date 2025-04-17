@@ -3,9 +3,6 @@
   <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 
   <title>{{recipe.title}}</title>
@@ -69,9 +66,23 @@
 
     <a href="{{ url_for('export_recipe', recipe_id=recipe.ID, type='email') }}">Share</a>
     <a href="{{ url_for('export_recipe', recipe_id=recipe.ID, type='pdf') }}">Download</a>
+    <br><br><br>
 
-    <a href="{{ url_for('bookmark', recipe_id=recipe.ID) }}">Bookmark</a>
-    <a href="{{ url_for('add_to_list', recipe_id=recipe.ID, list_id=0) }}">Add to list</a>
+    {% if user_lists %}
+        <form action="{{ url_for('save_to_list', recipe_id=recipe.ID) }}" method="POST">
+            <label for="list_id">Add to:</label>
+            <select name="list_id">
+            {% for lst in user_lists %}
+                <option value="{{ lst.id }}">{{ lst.name }}</option>
+            {% endfor %}
+            <option value="new">Create new list</option>
+            </select>
+            <input type="text" name="new_list_name" placeholder="New list name (if creating)">
+            <button type="submit">Save</button>
+        </form>
+    {% endif %}
+
+
 
 
     </main>
