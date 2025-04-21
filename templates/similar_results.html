@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
+  <title>{{search_query}}</title>
+  </head>
+
+
+  <body>
+    {% include 'navbar_private.html' %}
+
+    <main>
+        <h1>Similar To: {{search_query}}</h1>
+        <ul>
+        {% for item in results %}
+            <li>
+                <h1>Recipe: {{item['title']}}</h1>
+                <a href="/recipe/{{ item['id'] }}">
+                    <button>View Recipe</button>
+                </a>
+            </li>
+        {% endfor %}
+        </ul>
+    </main>
+</body>
+</html>

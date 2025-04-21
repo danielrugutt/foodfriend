@@ -1,8 +1,5 @@
 from classes.RecipeAdapter import RecipeAdapter
 from classes.Recipe import *
-import os
-import requests 
-import time
 
 class SpoonacularRecipeAdapter(RecipeAdapter):
     def __init__(self, spoonacularID):
@@ -11,7 +8,7 @@ class SpoonacularRecipeAdapter(RecipeAdapter):
     def standardizeRecipe(self, recipe_info, steps_info):
         try:
             recipe = RecipeBuilder(recipe_info['title'])
-            recipe.set_ID(self.ID)
+            recipe.set_ID(recipe_info['id'])
             recipe.set_servings(recipe_info['servings'])
             recipe.set_cuisine(", ".join([item for item in recipe_info['cuisines']]))
             recipe.set_cuisine(", ".join([item for item in recipe_info['diets']]))
