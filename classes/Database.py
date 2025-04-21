@@ -66,6 +66,7 @@ class Database(metaclass=Singleton):
 
     def get_ingredient(self, name, type="OTHER"):
         """ Checks to see if an ingredient exists - if not, makes it. """
+        name = name.lower()
         with self.app.app_context():
             existing_ingredient = db.session.query(IngredientModel).filter_by(name=name).first()
 

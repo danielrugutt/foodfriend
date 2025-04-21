@@ -213,7 +213,7 @@ def recipe(recipe_id):
     if uid:
         user_lists = RecipeListModel.query.filter_by(user_id=uid).all()
 
-    return render_template("recipe.html", recipe=recipe, user_lists=user_lists)
+    return render_template("recipe.html", recipe=recipe, user_lists=user_lists, uid=uid)
 
 @app.route('/recipe/<int:recipe_id>/export', methods=['GET'])
 def export_recipe(recipe_id):
@@ -339,7 +339,6 @@ def save_to_list(recipe_id):
     if recipe is None:
         return "Recipe not found", 404
 
-    # Handle new list creation
     if list_id == "new" and new_list_name:
         list_id = database.create_named_list(uid, new_list_name)
 
@@ -349,7 +348,7 @@ def save_to_list(recipe_id):
 
 @app.route('/lists')
 @auth_required
-def view_list():
+def lists():
     uid = session.get("uid")
     user_lists = RecipeListModel.query.filter_by(user_id=uid).all()
     return render_template("lists.html", lists=user_lists)

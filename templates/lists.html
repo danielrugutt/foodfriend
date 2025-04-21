@@ -11,18 +11,22 @@
     {% include 'navbar_private.html' %}
     <main>
       <h1>Lists</h1>
-        <ul>
-        {% for lst in lists %}
-            <li>
-            <strong>{{ lst.name }}</strong>
+        {% if lists %}
             <ul>
-                {% for recipe in lst.recipe_objects() %}
-                <li><a href="{{ url_for('recipe', recipe_id=recipe.id) }}">{{ recipe.title }}</a></li>
-                {% endfor %}
+            {% for list in lists %}
+                <li>
+                <strong>{{ list.name }}</strong>
+                <ul>
+                    {% for recipe in list.recipe_objects() %}
+                    <li><a href="{{ url_for('recipe', recipe_id=recipe.id) }}">{{ recipe.title }}</a></li>
+                    {% endfor %}
+                </ul>
+                </li>
+            {% endfor %}
             </ul>
-            </li>
-        {% endfor %}
-        </ul>
+        {% else %}
+            <p>You have no lists. Go make some!</p>
+        {% endif %}
     </main>
     <script src="{{ url_for('static', filename='scripts.js') }}" type="module"></script>
   </body>
