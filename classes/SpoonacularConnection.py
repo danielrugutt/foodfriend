@@ -1,7 +1,6 @@
 from classes.APIConnection import APIConnection
 import os
 import requests
-from classes.DietaryPreference import DietaryPreference
 from classes.SpoonacularRecipeAdapter import SpoonacularRecipeAdapter
 import time
 
@@ -35,4 +34,15 @@ class SpoonacularConnection(APIConnection):
         
         response =requests.get(self.search_address, params=query_payload)
         return response.json()
+    
+    def getSimilarResults(self, ID):
+        similar_address=f"https://api.spoonacular.com/recipes/{ID}/similar"
+        query_payload={'apiKey':self.api_key}
+        similar_recipies=requests.get(similar_address,query_payload)
+        print(similar_recipies.json())
+        similar_recipies=similar_recipies.json()
+        return similar_recipies
+
+        
+
         

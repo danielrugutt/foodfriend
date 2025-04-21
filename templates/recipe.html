@@ -13,8 +13,9 @@
 <body>
     {% include 'navbar_private.html' %}
     <main>
-        <h1>{{ recipe.title }}</h1>
+        <a href="{{ url_for('search_similar', recipe_id=recipe.ID,orig_recipe=recipe.title)}}" class="button">Search Similar Recipe</a>
 
+        <h1>{{ recipe.title }}</h1>
             {% if recipe.img_url %}
             <img src ="{{recipe.img_url}}">
             {%endif%}
