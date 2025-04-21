@@ -116,7 +116,8 @@ def get_recipe(recipe_id):
     if recipe is None:
         spoon = SpoonacularConnection()
         recipe = spoon.getRecipe(recipe_id)
-        database.insert_recipe(recipe)
+        #also not working so commented out
+        #database.insert_recipe(recipe)
 
     return recipe
 
@@ -185,6 +186,11 @@ def search():
 
     return render_template("search_results.html", results=response,search_query=search_query)
 
+@app.route('/search-similar/<int:recipe_id>/<string:orig_recipe>', methods=['GET', 'POST'])
+def search_similar(recipe_id,orig_recipe):
+    user_search=SpoonacularConnection()
+    response=user_search.getSimilarResults(recipe_id)
+    return render_template("similar_results.html", results=response,search_query=orig_recipe)
 
 @app.route('/settings', methods=['POST','GET'])
 def settings():
@@ -207,13 +213,15 @@ def recipe(recipe_id):
 
     if recipe is None:
         return "Recipe not found", 404
+    
+    #not sure what this is but it currently does not work so I commented it out
+    #uid = session.get("uid")
+    #user_lists = []
+    #if uid:
+    #    user_lists = RecipeListModel.query.filter_by(user_id=uid).all()
 
-    uid = session.get("uid")
-    user_lists = []
-    if uid:
-        user_lists = RecipeListModel.query.filter_by(user_id=uid).all()
-
-    return render_template("recipe.html", recipe=recipe, user_lists=user_lists)
+    #return render_template("recipe.html", recipe=recipe, user_lists=user_lists)
+    return render_template("recipe.html", recipe=recipe)
 
 @app.route('/recipe/<int:recipe_id>/export', methods=['GET'])
 def export_recipe(recipe_id):
