@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 
+
   <title>{{recipe.title}}</title>
   </head>
 
@@ -47,7 +48,12 @@
         <h2>Ingredients</h2>
         <ul>
             {% for ingredient in recipe.ingredients %}
+                {% if ingredient.unit %}
                 <li>{{ ingredient.quantity }} {{ ingredient.unit }} {{ ingredient.name }}</li>
+                {% else %}
+                <li>{{ ingredient.quantity }} {{ ingredient.name }}</li>
+                {% endif %}
+
             {% endfor %}
         </ul>
 
@@ -69,23 +75,24 @@
     <a href="{{ url_for('export_recipe', recipe_id=recipe.ID, type='pdf') }}">Download</a>
     <br><br><br>
 
-    {% if user_lists %}
+    {% if uid %}
         <form action="{{ url_for('save_to_list', recipe_id=recipe.ID) }}" method="POST">
             <label for="list_id">Add to:</label>
-            <select name="list_id">
-            {% for lst in user_lists %}
-                <option value="{{ lst.id }}">{{ lst.name }}</option>
+            <select id="list_select" name="list_id">
+            {% for list in user_lists %}
+                <option value="{{ list.id }}">{{ list.name }}</option>
             {% endfor %}
             <option value="new">Create new list</option>
             </select>
-            <input type="text" name="new_list_name" placeholder="New list name (if creating)">
+            <input id="name_input_box" type="text" name="new_list_name" placeholder="New list name">
             <button type="submit">Save</button>
         </form>
     {% endif %}
 
 
 
-
+    <script src="../static/lists.js"></script>
     </main>
+
 </body>
 </html>
