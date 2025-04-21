@@ -116,8 +116,7 @@ def get_recipe(recipe_id):
     if recipe is None:
         spoon = SpoonacularConnection()
         recipe = spoon.getRecipe(recipe_id)
-        #also not working so commented out
-        #database.insert_recipe(recipe)
+        database.insert_recipe(recipe)
 
     return recipe
 
@@ -214,14 +213,11 @@ def recipe(recipe_id):
     if recipe is None:
         return "Recipe not found", 404
 
-   
-    #not sure what this is but it currently does not work so I commented it out
-    #uid = session.get("uid")
-    #user_lists = []
-    #if uid:
-    #    user_lists = RecipeListModel.query.filter_by(user_id=uid).all()
+    uid = session.get("uid")
+    user_lists = []
+    if uid:
+       user_lists = RecipeListModel.query.filter_by(user_id=uid).all()
 
-    #return render_template("recipe.html", recipe=recipe, user_lists=user_lists, uid=uid)
     return render_template("recipe.html", recipe=recipe, user_lists=user_lists, uid=uid)
 
 @app.route('/recipe/<int:recipe_id>/export', methods=['GET'])
