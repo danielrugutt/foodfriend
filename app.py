@@ -1,8 +1,9 @@
 from flask import Flask, redirect, render_template, request, make_response, session, abort, jsonify, url_for
+from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from functools import wraps
 from firebase_admin import credentials, firestore, auth
-from datetime import timedelta
+from datetime import datetime,timedelta, time
 from dotenv import load_dotenv
 from typing import List
 from classes.DietaryPreference import DietaryPreference
@@ -11,6 +12,13 @@ from classes.SpoonacularRecipeAdapter import SpoonacularRecipeAdapter
 from classes.Recipe import *
 from classes.Exporter import *
 from classes.Database import Database
+from models.UserModel import UserModel
+from models.DietaryPreferenceModel import DietaryPreferenceModel
+from models.IngredientModel import IngredientModel
+from models.PlannedMeal import PlannedMeal
+from models.RecipeIngredientModel import RecipeIngredientModel
+from models.RecipeListModel import RecipeListModel
+from models.RecipeModel import RecipeModel
 import secrets
 import os
 import sys
@@ -33,10 +41,12 @@ app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Can be 'Strict', 'Lax', or 'Non
 cred = credentials.Certificate("firebase-auth.json")
 firebase_admin.initialize_app(cred)
 firestore_db = firestore.client()
-
+CORS(app)
 database = Database(app)
 db = database.initialize_database()
 
+
+##### ALL TESTING STUFF, TO BE REMOVED AT A LATER DATE ######
 #test user only
 test_user=DietaryPreference(["greek"],["paprika"],["200"],["Peanut"],["vegetarian"] )
 
@@ -56,6 +66,62 @@ taratorRecipe = (
 
 database.insert_recipe(taratorRecipe)
 
+@app.route('/test-setup')
+def test_setup():
+    # 1. Create sample user
+    test_uid = "test-user-123"
+    user = UserModel.query.filter_by(id=test_uid).first()
+    if not user:
+        user = UserModel(id=test_uid, name="Noah", email="test@example.com")
+        db.session.add(user)
+    
+    # 2. Create sample recipe
+    recipe = RecipeModel.query.filter_by(title="Test Pasta").first()
+    if not recipe:
+        recipe = RecipeModel(title="Test Pasta", cooking_time=20, servings=4, cuisine="Italian")
+        db.session.add(recipe)
+
+    # 3. Bookmark the recipe
+    if recipe not in user.bookmarked_recipes:
+        user.bookmarked_recipes.append(recipe)
+
+    # 4. Add a planned meal
+    planned_meal = PlannedMeal(
+        user=user,
+        recipe=recipe,
+        title="Lunch: Test Pasta",
+        datetime=datetime.now(),
+        notes="Just testing calendar"
+    )
+    db.session.add(planned_meal)
+
+    db.session.commit()
+
+    # Simulate login
+    session['uid'] = test_uid
+    session['user'] = { "uid": test_uid, "email": "test@example.com" }
+
+    return "Test data created and session set!"
+
+##### TESTING SECTION ENDS HERE #####
+
+def get_current_user():
+    uid = session.get("uid")
+    if not uid:
+        return None
+    return UserModel.query.filter_by(id=uid).first()
+
+def get_recipe(recipe_id):
+    recipe = database.get_recipe(recipe_id)
+
+    if recipe is None:
+        spoon = SpoonacularConnection()
+        recipe = spoon.getRecipe(recipe_id)
+        database.insert_recipe(recipe)
+
+    return recipe
+
+
 """ AUTHENTICATION ROUTES """
 # Add this to any request needing authentication
 def auth_required(f):
@@ -69,30 +135,43 @@ def auth_required(f):
         
     return decorated_function
 
+def get_bearer_token(auth_header):
+    if not auth_header or not auth_header.startswith('Bearer '):
+        return None
+    return auth_header.split(' ')[1]
 
 @app.route('/auth', methods=['POST'])
 def authorize():
-    token = request.headers.get('Authorization')
-
-    if not token or not token.startswith('Bearer '):
-        return "Unauthorized", 401
-
-    token = token[7:]  # Strip off 'Bearer ' to get the actual token
+    token = get_bearer_token(request.headers.get('Authorization'))
+    if not token:
+        return jsonify({'error': 'Authorization header missing or invalid'}), 401
 
     try:
-        decoded_token = auth.verify_id_token(token, check_revoked=True, clock_skew_seconds=60) # Validate token here
-        session['user'] = decoded_token # Add user to session
-
-        # checking if user is in local database, making them there if not
+        # Validate the token
+        decoded_token = auth.verify_id_token(token, check_revoked=True, clock_skew_seconds=60)
         uid = decoded_token['uid']
-        session['uid'] = uid
         email = decoded_token.get('email')
-        database.check_and_create_user(uid, email)
 
-        return redirect(url_for('dashboard'))
-    
-    except:
-        return "Unauthorized", 401
+        # Add user to session
+        session['user'] = {'uid': uid, 'email': email}
+        session['uid'] = uid
+
+        # Ensure user exists in the local database
+        try:
+            print(f"Creating/checking user with UID: {uid}, email: {email}")
+            database.check_and_create_user(uid, email)
+        except Exception as e:
+            print(f"Error interacting with the database: {e}", file=sys.stderr)
+            import traceback
+            traceback.print_exc()  # Add this to see the full traceback in logs
+            return jsonify({'error': 'Internal server error'}), 500
+
+        # Return success response
+        return jsonify({'message': 'User authenticated successfully'}), 200
+
+    except Exception as e:
+        print(f"Error verifying token: {e}", file=sys.stderr)
+        return jsonify({'error': 'Unauthorized'}), 401
 
 
 """ GUEST ROUTES """
@@ -120,6 +199,11 @@ def search():
 
     return render_template("search_results.html", results=response,search_query=search_query)
 
+@app.route('/search-similar/<int:recipe_id>/<string:orig_recipe>', methods=['GET', 'POST'])
+def search_similar(recipe_id,orig_recipe):
+    user_search=SpoonacularConnection()
+    response=user_search.getSimilarResults(recipe_id)
+    return render_template("similar_results.html", results=response,search_query=orig_recipe)
 
 @app.route('/settings', methods=['POST','GET'])
 def settings():
@@ -138,24 +222,21 @@ def settings():
 
 @app.route('/recipe/<int:recipe_id>')
 def recipe(recipe_id):
-    recipe = database.get_recipe(recipe_id)
-
-    if recipe is None:
-        spoonacular_connection=SpoonacularConnection()
-        recipe=spoonacular_connection.getRecipe(recipe_id)
+    recipe = get_recipe(recipe_id)
 
     if recipe is None:
         return "Recipe not found", 404
 
-    return render_template("recipe.html", recipe=recipe)
+    uid = session.get("uid")
+    user_lists = []
+    if uid:
+       user_lists = RecipeListModel.query.filter_by(user_id=uid).all()
+
+    return render_template("recipe.html", recipe=recipe, user_lists=user_lists, uid=uid)
 
 @app.route('/recipe/<int:recipe_id>/export', methods=['GET'])
 def export_recipe(recipe_id):
-    recipe = database.get_recipe(recipe_id)
-
-    if recipe is None:
-        spoonacular_connection=SpoonacularConnection()
-        recipe=spoonacular_connection.getRecipe(recipe_id)
+    recipe = get_recipe(recipe_id)
 
     if recipe is None:
         return "Recipe not found", 404
@@ -200,45 +281,97 @@ def calendar():
     return render_template('calendar.html')
 
 
+@app.route('/api/add-meal', methods=['POST'])
+def add_meal():
+    data = request.json
+    title = data['title']
+    recipe_id = data['recipe_id']
+    start = data['start']  # ISO 8601 string: "2025-04-14T12:00:00"
+
+
+    day = datetime.strptime(start.split('T')[0], "%Y-%m-%d").date()
+    time_str = start.split('T')[1][:5]
+    time_obj = datetime.strptime(time_str, "%H:%M").time()
+
+
+    user = get_current_user()  # However you're managing sessions
+    recipe = db.session.get(RecipeModel, recipe_id)
+    if not recipe or recipe not in user.bookmarked_recipes:
+        return jsonify({"error": "Invalid recipe"}), 400
+
+
+    new_meal = PlannedMeal(
+        user_id=user.id,
+        recipe_id=recipe_id,
+        title=title,
+        day=day,
+        time=time_obj
+    )
+    db.session.add(new_meal)
+    db.session.commit()
+
+
+    return jsonify({"message": "Meal added"}), 201
+
+
+
 """ LOGGED IN USER ROUTES """
 @app.route('/dashboard')
 @auth_required
 def dashboard():
     return render_template('dashboard.html')
 
-
-@app.route('/recipe/<int:recipe_id>/bookmark/')
+@app.route('/api/planned-meals')
 @auth_required
-def bookmark(recipe_id):
-    recipe = database.get_recipe(recipe_id)
+def get_planned_meals():
+    user = get_current_user()
+    if not user:
+        return jsonify({"error": "User not authenticated"}), 401
 
-    if recipe is None:
-        spoonacular_connection=SpoonacularConnection()
-        recipe=spoonacular_connection.getRecipe(recipe_id)
+    meals = PlannedMeal.query.filter_by(user_id=user.id).all()
 
+    events = []
+    for meal in meals:
+        start_dt = meal.datetime
+        end_dt = start_dt + timedelta(hours=1)
+
+        events.append({
+            "title": f"{meal.title} ({meal.recipe.name})",
+            "start": start_dt.isoformat(),
+            "end": end_dt.isoformat(),
+            "extendedProps": {
+                "recipe_id": meal.recipe.id,
+                "notes": meal.notes or ""
+            }
+        })
+
+    return jsonify(events)
+
+@app.route('/recipe/<int:recipe_id>/bookmark', methods=["POST"])
+@auth_required
+def save_to_list(recipe_id):
+    uid = session.get("uid")
+    list_id = request.form.get("list_id")
+    new_list_name = request.form.get("new_list_name")
+
+    recipe = get_recipe(recipe_id)
     if recipe is None:
         return "Recipe not found", 404
 
-    uid = session.get("uid")
-    database.add_recipe_to_list(uid, recipe_id)
-    return "Saving recipe " + str(recipe_id) + " with user " + str(uid) + " to bookmarks"
+    if list_id == "new" and new_list_name:
+        list_id = database.create_named_list(uid, new_list_name)
 
-# this is duplication of the above method, will try to fix it later
-@app.route('/recipe/<int:recipe_id>/bookmark/<int:list_id>')
-@auth_required
-def add_to_list(recipe_id, list_id):
-    recipe = database.get_recipe(recipe_id)
-
-    if recipe is None:
-        spoonacular_connection=SpoonacularConnection()
-        recipe=spoonacular_connection.getRecipe(recipe_id)
-
-    if recipe is None:
-        return "Recipe not found", 404
-
-    uid = session.get("uid")
     database.add_recipe_to_list(uid, recipe_id, list_id)
-    return "Saving recipe " + str(recipe_id) + " with user " + str(uid) + " to list " + str(list_id)
+    return f"Saved recipe {recipe_id} to list {list_id}"
+
+
+@app.route('/lists')
+@auth_required
+def lists():
+    uid = session.get("uid")
+    user_lists = RecipeListModel.query.filter_by(user_id=uid).all()
+    return render_template("lists.html", lists=user_lists)
+
 
 @app.route('/profile')
 @auth_required

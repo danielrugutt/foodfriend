@@ -42,7 +42,145 @@ main {
 }
 
 
+/* ALL INPUT */
 
+.search-form {
+    display: flex;
+    align-items: center;
+    margin-left: 20px;
+    margin-right: 20px;
+    flex-grow: 1;
+    max-width: 1000px;
+}
+
+.search-input {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-right: 5px;
+    flex-grow: 2;
+    max-width: 800px;
+    font-size: 1.1em;
+    text-align: center;
+}
+
+.search-button {
+    padding: 8px 12px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    max-width: 200px;
+    padding: var(--element-padding);
+    width: 100%;
+}
+
+.search-button:hover {
+    background-color: #0056b3;
+}
+
+button {
+    font-weight: 600;
+    width: 100%;
+}
+
+button:hover {
+    cursor: pointer;
+}
+
+/*Pasted in from settings*/
+form > div {
+    margin-bottom: 1.5rem;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+input {
+    padding: 0.5rem;
+    font-size: 1rem;
+    width: 250px;
+    margin-right: 0.5rem;
+
+}
+
+select{
+    font-size: 1rem;
+    padding: 0.5rem;
+}
+
+button {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.9rem;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+
+
+.exclusionList {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 0.5rem;
+}
+
+.preference {
+    background-color: #d9dbde;
+    padding: 0.1rem 0rem 0.1rem 0.5rem;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+}
+
+.removeBtn {
+    background: none;
+    border: none;
+    color: red;
+    font-size: 1rem;
+    cursor: pointer;
+    margin:0px;
+}
+
+.removeBtn:hover {
+    text-decoration: underline;
+}
+
+#foodPreferencesForm > button[type="submit"] {
+margin-top: 1rem;
+background-color: #28a745;
+}
+
+#foodPreferencesForm > button[type="submit"]:hover {
+background-color: #218838;
+}
+
+button {
+    display: inline-block; /* Ensures the button only takes up as much space as needed */
+    padding: 0.4rem 0.75rem;
+    font-size: 0.9rem;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 0.3rem;
+    margin-right: 0.5rem;
+    width: auto; /* Override any full-width behavior */
+}
 
 
 /* === Structure === */
@@ -69,17 +207,6 @@ main {
 
     width: 100%;
     
-}
-
-.logo-img {
-    width: 80px;
-    margin-left: 1rem;
-}
-
-.logo {
-    font-size: 3rem;
-    text-decoration: none;
-    color: white;
 }
 
 .navbar a {
@@ -189,38 +316,6 @@ main {
 }
 
 
-
-
-
-/* === Buttons === */
-
-button {
-    font-weight: 600;
-    width: 100%;
-}
-
-button:hover {
-    cursor: pointer;
-}
-
-
-/* === Forms === */
-
-input, button {
-    padding: var(--element-padding);
-    border-radius: var(--element-border-radius);
-    width: 100%;
-    font-size: 1.1em;
-    text-align: center;
-}
-
-
-
-
-
-
-
-  
 
 
 
@@ -362,44 +457,11 @@ input, button {
     color: white;
 }
 
-/* Footer Styles */
-
-footer {
-    background-color: var(--grey-color); /* Light grey background */
-    color: white; /* Dark grey text */
-    font-family: var(--primary-font);
-    text-align: center; /* Centering the content */
-    padding: 10px 0; /* Padding above and below */
-    font-size: 14px; /* Standard font size */
-}
-
-.simple-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 1rem; /* Padding on the sides */
-}
-
-.simple-footer a {
-    color: white; /* Standard link color */
-    text-decoration: none; /* No underlines on links */
-    margin: 0 5px; /* Margins for spacing */
-}
-
-.simple-footer a:hover {
-    text-decoration: underline; /* Underline on hover for better user interaction */
-}
-
-
 
 
 
 /* Responsive */
 @media screen and (max-width: 600px) {
-
-
-
-
     .navbar-right {
         position: fixed; 
         top: 0;
@@ -474,8 +536,4 @@ footer {
         color: black
     }
 
-    .simple-footer {
-        flex-direction: column;
-        padding: 0;
-    }
 }

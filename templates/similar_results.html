@@ -13,12 +13,11 @@
     {% include 'navbar_private.html' %}
 
     <main>
-        <h1>Search Results for {{search_query}}</h1>
+        <h1>Similar To: {{search_query}}</h1>
         <ul>
-        {% for item in results['results'] %}
+        {% for item in results %}
             <li>
                 <h1>Recipe: {{item['title']}}</h1>
-                <img src ="{{item['image']}}">
                 <a href="/recipe/{{ item['id'] }}">
                     <button>View Recipe</button>
                 </a>

@@ -39,6 +39,8 @@ class Database(metaclass=Singleton):
             from models.RecipeIngredientModel import RecipeIngredientModel
             from models.UserModel import UserModel
             from models.RecipeListModel import RecipeListModel, RecipeListRecipeModel
+            from models.DietaryPreferenceModel import DietaryPreferenceModel
+            from models.PlannedMeal import PlannedMeal
             db.create_all()
 
         return db
@@ -64,6 +66,7 @@ class Database(metaclass=Singleton):
 
     def get_ingredient(self, name, type="OTHER"):
         """ Checks to see if an ingredient exists - if not, makes it. """
+        name = name.lower()
         with self.app.app_context():
             existing_ingredient = db.session.query(IngredientModel).filter_by(name=name).first()
 
@@ -89,6 +92,10 @@ class Database(metaclass=Singleton):
             diet=recipe_object.diet,
             intolerances=recipe_object.intolerances
         )
+
+        if recipe_object.ID:
+            recipe_model.id = recipe_object.ID
+
 
         for ingredient in recipe_object.ingredients:
             found_ingredient = self.get_ingredient(ingredient.name)
@@ -144,7 +151,7 @@ class Database(metaclass=Singleton):
             existing_user = UserModel.query.filter_by(id=uid).first()
 
             if not existing_user:
-                user_model = UserModel(id=uid, email=email)
+                user_model = UserModel(id=uid, email=email, name="")
                 self.get_default_list(uid)
                 db.session.add(user_model)
                 db.session.commit()
@@ -190,6 +197,13 @@ class Database(metaclass=Singleton):
                 db.session.add(join_model)
                 db.session.commit()
 
+
+    def create_named_list(self, uid, list_name):
+        with self.app.app_context():
+            new_list = RecipeListModel(name=list_name, user_id=uid)
+            db.session.add(new_list)
+            db.session.commit()
+            return new_list.id
 
 
 
