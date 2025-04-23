@@ -151,7 +151,7 @@ class Database(metaclass=Singleton):
             existing_user = UserModel.query.filter_by(id=uid).first()
 
             if not existing_user:
-                user_model = UserModel(id=uid, email=email)
+                user_model = UserModel(id=uid, email=email, name="")
                 self.get_default_list(uid)
                 db.session.add(user_model)
                 db.session.commit()
