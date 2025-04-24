@@ -112,18 +112,6 @@ def get_current_user():
         return None
     return UserModel.query.filter_by(id=uid).first()
 
-# THIS CAN BE REMOVED once fully moved into recipe service
-def get_recipe(recipe_id):
-    recipe = database.get_recipe(recipe_id)
-
-    if recipe is None:
-        spoon = SpoonacularConnection()
-        recipe = spoon.getRecipe(recipe_id)
-        database.insert_recipe(recipe)
-
-    return recipe
-
-
 """ AUTHENTICATION ROUTES """
 # Add this to any request needing authentication
 def auth_required(f):
