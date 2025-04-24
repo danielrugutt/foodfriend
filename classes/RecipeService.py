@@ -1,5 +1,9 @@
+from flask import Flask, redirect, render_template, request, make_response, session, abort, jsonify, url_for
 from models.RecipeListModel import RecipeListModel
+from classes.SpoonacularConnection import SpoonacularConnection
 from classes.Database import Database
+from classes.Exporter import *
+
 
 class RecipeService:
     database = None
@@ -33,4 +37,38 @@ class RecipeService:
         if uid:
             user_lists = RecipeListModel.query.filter_by(user_id=uid).all()
 
-        return recipe, user_lists, uid
+        return render_template("recipe.html", recipe=recipe, user_lists=user_lists, uid=uid)
+
+    @staticmethod
+    def export_recipe(recipe_id):
+        recipe = RecipeService.get_recipe_from_database(recipe_id)
+
+        if recipe is None:
+            return "Recipe not found", 404
+
+        export_type = request.args.get('type')
+        exporter = FactoryMethod.create_exporter(recipe, export_type)
+
+        return exporter.exportRecipe()
+
+    @staticmethod
+    def bookmark_recipe(recipe_id, session):
+        uid = session.get("uid")
+        list_id = request.form.get("list_id")
+        new_list_name = request.form.get("new_list_name")
+
+        recipe = RecipeService.get_recipe_from_database(recipe_id)
+        if recipe is None:
+            return "Recipe not found", 404
+
+        if list_id == "new" and new_list_name:
+            list_id = RecipeService.database.create_named_list(uid, new_list_name)
+
+        RecipeService.database.add_recipe_to_list(uid, recipe_id, list_id)
+        return f"Saved recipe {recipe_id} to list {list_id}"
+
+    @staticmethod
+    def get_lists(session):
+        uid = session.get("uid")
+        user_lists = RecipeListModel.query.filter_by(user_id=uid).all()
+        return render_template("lists.html", lists=user_lists)
