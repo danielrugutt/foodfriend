@@ -1,4 +1,5 @@
 from flask import Flask, redirect, render_template, request, make_response, session, abort, jsonify, url_for
+from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from functools import wraps
 from firebase_admin import credentials, firestore, auth
@@ -45,6 +46,8 @@ firebase_admin.initialize_app(cred)
 firestore_db = firestore.client()
 
 # this will eventually have to go
+CORS(app)
+>>>>>>> e685dfac80c0c648c43f43e86feb8641ccb341df
 database = Database(app)
 db = database.initialize_database()
 
@@ -139,30 +142,43 @@ def auth_required(f):
         
     return decorated_function
 
+def get_bearer_token(auth_header):
+    if not auth_header or not auth_header.startswith('Bearer '):
+        return None
+    return auth_header.split(' ')[1]
 
 @app.route('/auth', methods=['POST'])
 def authorize():
-    token = request.headers.get('Authorization')
-
-    if not token or not token.startswith('Bearer '):
-        return "Unauthorized", 401
-
-    token = token[7:]  # Strip off 'Bearer ' to get the actual token
+    token = get_bearer_token(request.headers.get('Authorization'))
+    if not token:
+        return jsonify({'error': 'Authorization header missing or invalid'}), 401
 
     try:
-        decoded_token = auth.verify_id_token(token, check_revoked=True, clock_skew_seconds=60) # Validate token here
-        session['user'] = decoded_token # Add user to session
-
-        # checking if user is in local database, making them there if not
+        # Validate the token
+        decoded_token = auth.verify_id_token(token, check_revoked=True, clock_skew_seconds=60)
         uid = decoded_token['uid']
-        session['uid'] = uid
         email = decoded_token.get('email')
-        database.check_and_create_user(uid, email)
 
-        return redirect(url_for('dashboard'))
-    
-    except:
-        return "Unauthorized", 401
+        # Add user to session
+        session['user'] = {'uid': uid, 'email': email}
+        session['uid'] = uid
+
+        # Ensure user exists in the local database
+        try:
+            print(f"Creating/checking user with UID: {uid}, email: {email}")
+            database.check_and_create_user(uid, email)
+        except Exception as e:
+            print(f"Error interacting with the database: {e}", file=sys.stderr)
+            import traceback
+            traceback.print_exc()  # Add this to see the full traceback in logs
+            return jsonify({'error': 'Internal server error'}), 500
+
+        # Return success response
+        return jsonify({'message': 'User authenticated successfully'}), 200
+
+    except Exception as e:
+        print(f"Error verifying token: {e}", file=sys.stderr)
+        return jsonify({'error': 'Unauthorized'}), 401
 
 
 """ GUEST ROUTES """

@@ -3,7 +3,9 @@ import { auth, provider } from "./firebase-config.js";
 import { createUserWithEmailAndPassword,
          signInWithEmailAndPassword,
          signInWithPopup,
-         sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+         sendPasswordResetEmail,
+         onAuthStateChanged,
+         signOut } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
 
 
 
@@ -13,6 +15,7 @@ const signUpWithGoogleButtonEl = document.getElementById("sign-up-with-google-bt
 const emailInputEl = document.getElementById("email-input")
 const passwordInputEl = document.getElementById("password-input")
 const signInButtonEl = document.getElementById("sign-in-btn")
+const signOutButtonEl = document.getElementById("sign-out-btn")
 const createAccountButtonEl = document.getElementById("signup-form")
 const emailForgotPasswordEl = document.getElementById("email-forgot-password")
 const forgotPasswordButtonEl = document.getElementById("forgot-password-btn")
@@ -25,6 +28,7 @@ const errorMsgGoogleSignIn = document.getElementById("google-signin-error-messag
 /* == UI - Event Listeners == */
 signInWithGoogleButtonEl && signInWithGoogleButtonEl.addEventListener("click", authSignInWithGoogle);
 signInButtonEl           && signInButtonEl.addEventListener("click", authSignInWithEmail);
+signOutButtonEl          && signOutButtonEl.addEventListener('click', logout);
 signUpWithGoogleButtonEl && signUpWithGoogleButtonEl.addEventListener("click", authSignUpWithGoogle);
 forgotPasswordButtonEl   && forgotPasswordButtonEl.addEventListener("click", resetPassword);
 createAccountButtonEl    && createAccountButtonEl.addEventListener("submit", (e) => {
@@ -32,10 +36,60 @@ createAccountButtonEl    && createAccountButtonEl.addEventListener("submit", (e)
     authCreateAccountWithEmail();
 });
 
+/* === URL Variables === */
+// URL variables
+const url               = window.location.href;
+const indexURL          = window.location.origin + '/index';
+const forgotPasswordURL = window.location.origin + '/reset-password';
+const dashboardURL      = window.location.origin + '/dashboard';
+const loginURL          = window.location.origin + '/login';
+const signupURL         = window.location.origin + '/signup';
+const profileURL         = window.location.origin + '/profile';
+const settingsURL         = window.location.origin + '/settings';
+
 
 /* === Main Code === */
 
 /* = Functions - Firebase - Authentication = */
+
+
+
+onAuthStateChanged(auth, (user) => {
+    if (user) {
+        console.log("User is signed in: ", user.email);
+
+        // Check if the user is on a public page and redirect to the dashboard
+        const publicPages = [indexURL, loginURL, forgotPasswordURL, signupURL];
+        if (publicPages.includes(url)) {
+            // Ensure the backend session is established before redirecting
+            user.getIdToken().then(idToken => {
+                fetch('/auth', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${idToken}`
+                    },
+                }).then(response => {
+                    if (response.ok) {
+                        window.location.href = '/dashboard';
+                    } else {
+                        console.error('Backend session not established:', response.status);
+                    }
+                }).catch(error => {
+                    console.error('Error establishing backend session:', error);
+                });
+            });
+        }
+    } else {
+        console.log("User is not signed in");
+
+        // Redirect to login if trying to access a protected page
+        const publicPages = [indexURL, loginURL, forgotPasswordURL, signupURL];
+        if (!publicPages.includes(url)) {
+            window.location.replace(loginURL);
+        }
+    }
+});
 
 // Function to sign in with Google authentication
 async function authSignInWithGoogle() {
@@ -122,7 +176,9 @@ function authSignInWithEmail() {
                 errorMsgEmail.textContent = "Invalid email"
             } else if (errorCode === "auth/invalid-credential") {
                 errorMsgPassword.textContent = "Login failed - invalid email or password"
-            } 
+            }
+            else
+                alert("Error signing in: ", errorCode)
         });
 }
 
@@ -188,20 +244,32 @@ function loginUser(user, idToken) {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${idToken}`
         },
-        // credentials: 'same-origin'  // Ensures cookies are sent with the request
     }).then(response => {
         if (response.ok) {
-            window.location.href = '/dashboard';
+            console.log('User authenticated successfully');
+            window.location.href = '/dashboard'; // Redirect to dashboard
         } else {
-            console.log(response.json)
-            console.error('Failed to login');
-            // Handle errors here
+            console.error('Failed to authenticate user:', response.status);
+            response.json().then(data => console.error(data));
+            alert('Authentication failed. Please try again.');
         }
     }).catch(error => {
-        console.error('Error with Fetch operation: ', error);
+        console.error('Error with Fetch operation:', error);
+        alert('An error occurred while logging in. Please try again.');
     });
 }
 
+function logout(event) {
+    event.preventDefault();
+    signOut(auth)
+    .then(() => {
+        // Successfully signed out of Firebase
+        window.location.href = '/logout'; // Redirect to Flask logout route
+    })
+    .catch((error) => {
+        console.error('Error signing out:', error);
+    });
+}
 
 // /* = Functions - UI = */
 function clearInputField(field) {
