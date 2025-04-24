@@ -18,6 +18,7 @@ from models.PlannedMeal import PlannedMeal
 from models.RecipeIngredientModel import RecipeIngredientModel
 from models.RecipeListModel import RecipeListModel
 from models.RecipeModel import RecipeModel
+from classes.RecipeService import RecipeService
 import secrets
 import os
 import sys
@@ -28,6 +29,8 @@ load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
+
+RecipeService.init(app)
 
 # Configure session cookie settings
 app.config['SESSION_COOKIE_SECURE'] = True  # Ensure cookies are sent over HTTPS
@@ -41,6 +44,7 @@ cred = credentials.Certificate("firebase-auth.json")
 firebase_admin.initialize_app(cred)
 firestore_db = firestore.client()
 
+# this will eventually have to go
 database = Database(app)
 db = database.initialize_database()
 
@@ -110,6 +114,7 @@ def get_current_user():
         return None
     return UserModel.query.filter_by(id=uid).first()
 
+# THIS CAN BE REMOVED once fully moved into recipe service
 def get_recipe(recipe_id):
     recipe = database.get_recipe(recipe_id)
 
@@ -208,20 +213,12 @@ def settings():
 
 @app.route('/recipe/<int:recipe_id>')
 def recipe(recipe_id):
-    recipe = get_recipe(recipe_id)
-
-    if recipe is None:
-        return "Recipe not found", 404
-
-    uid = session.get("uid")
-    user_lists = []
-    if uid:
-       user_lists = RecipeListModel.query.filter_by(user_id=uid).all()
-
+    recipe, user_lists, uid = RecipeService.format_recipe_page(recipe_id, session)
     return render_template("recipe.html", recipe=recipe, user_lists=user_lists, uid=uid)
 
 @app.route('/recipe/<int:recipe_id>/export', methods=['GET'])
 def export_recipe(recipe_id):
+
     recipe = get_recipe(recipe_id)
 
     if recipe is None:
