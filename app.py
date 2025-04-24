@@ -10,15 +10,14 @@ from classes.DietaryPreference import DietaryPreference
 from classes.SpoonacularConnection import SpoonacularConnection
 from classes.SpoonacularRecipeAdapter import SpoonacularRecipeAdapter
 from classes.Recipe import *
-from classes.Exporter import *
 from classes.Database import Database
 from models.UserModel import UserModel
 from models.DietaryPreferenceModel import DietaryPreferenceModel
 from models.IngredientModel import IngredientModel
 from models.PlannedMeal import PlannedMeal
 from models.RecipeIngredientModel import RecipeIngredientModel
-from models.RecipeListModel import RecipeListModel
 from models.RecipeModel import RecipeModel
+from classes.RecipeService import RecipeService
 import secrets
 import os
 import sys
@@ -29,6 +28,8 @@ load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
+
+RecipeService.init(app)
 
 # Configure session cookie settings
 app.config['SESSION_COOKIE_SECURE'] = True  # Ensure cookies are sent over HTTPS
@@ -110,17 +111,6 @@ def get_current_user():
     if not uid:
         return None
     return UserModel.query.filter_by(id=uid).first()
-
-def get_recipe(recipe_id):
-    recipe = database.get_recipe(recipe_id)
-
-    if recipe is None:
-        spoon = SpoonacularConnection()
-        recipe = spoon.getRecipe(recipe_id)
-        database.insert_recipe(recipe)
-
-    return recipe
-
 
 """ AUTHENTICATION ROUTES """
 # Add this to any request needing authentication
@@ -222,30 +212,11 @@ def settings():
 
 @app.route('/recipe/<int:recipe_id>')
 def recipe(recipe_id):
-    recipe = get_recipe(recipe_id)
-
-    if recipe is None:
-        return "Recipe not found", 404
-
-    uid = session.get("uid")
-    user_lists = []
-    if uid:
-       user_lists = RecipeListModel.query.filter_by(user_id=uid).all()
-
-    return render_template("recipe.html", recipe=recipe, user_lists=user_lists, uid=uid)
+    return RecipeService.format_recipe_page(recipe_id, session)
 
 @app.route('/recipe/<int:recipe_id>/export', methods=['GET'])
 def export_recipe(recipe_id):
-    recipe = get_recipe(recipe_id)
-
-    if recipe is None:
-        return "Recipe not found", 404
-
-    export_type = request.args.get('type')
-    exporter = FactoryMethod.create_exporter(recipe, export_type)
-
-    return exporter.exportRecipe()
-
+    return RecipeService.export_recipe(recipe_id)
 
 @app.route('/login')
 def login():
@@ -299,7 +270,6 @@ def add_meal():
     if not recipe or recipe not in user.bookmarked_recipes:
         return jsonify({"error": "Invalid recipe"}), 400
 
-
     new_meal = PlannedMeal(
         user_id=user.id,
         recipe_id=recipe_id,
@@ -312,7 +282,6 @@ def add_meal():
 
 
     return jsonify({"message": "Meal added"}), 201
-
 
 
 """ LOGGED IN USER ROUTES """
@@ -350,28 +319,12 @@ def get_planned_meals():
 @app.route('/recipe/<int:recipe_id>/bookmark', methods=["POST"])
 @auth_required
 def save_to_list(recipe_id):
-    uid = session.get("uid")
-    list_id = request.form.get("list_id")
-    new_list_name = request.form.get("new_list_name")
-
-    recipe = get_recipe(recipe_id)
-    if recipe is None:
-        return "Recipe not found", 404
-
-    if list_id == "new" and new_list_name:
-        list_id = database.create_named_list(uid, new_list_name)
-
-    database.add_recipe_to_list(uid, recipe_id, list_id)
-    return f"Saved recipe {recipe_id} to list {list_id}"
-
+    return RecipeService.bookmark_recipe(recipe_id, session)
 
 @app.route('/lists')
 @auth_required
 def lists():
-    uid = session.get("uid")
-    user_lists = RecipeListModel.query.filter_by(user_id=uid).all()
-    return render_template("lists.html", lists=user_lists)
-
+    return RecipeService.get_lists(session)
 
 @app.route('/profile')
 @auth_required
