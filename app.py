@@ -194,7 +194,8 @@ def recipe(recipe_id):
 
 @app.route('/recipe/<int:recipe_id>/export', methods=['GET'])
 def export_recipe(recipe_id):
-    return RecipeService.export_recipe(recipe_id)
+    export_type = request.args.get('type')
+    return RecipeService.export_recipe(recipe_id, export_type)
 
 @app.route('/login')
 def login():
