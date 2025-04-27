@@ -5,7 +5,10 @@ import { createUserWithEmailAndPassword,
          signInWithPopup,
          sendPasswordResetEmail,
          onAuthStateChanged,
-         signOut } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+         signOut,
+         updateEmail,
+         reauthenticateWithCredential,
+         EmailAuthProvider } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
 
 
 
@@ -234,6 +237,40 @@ function resetPassword() {
     });
 }
 
+
+function changeEmail() {
+    const user = auth.currentUser;
+    const currentEmail = user.email;
+    const currentPassword = prompt("Please enter your current password to verify your identity:");
+
+    if (currentPassword) {
+        const credential = EmailAuthProvider.credential(currentEmail, currentPassword);
+
+        reauthenticateWithCredential(user, credential)
+        .then(() => {
+            const newEmail = prompt("Please enter your new email address:");
+
+            if (newEmail) {
+                updateEmail(user, newEmail)
+                .then(() => {
+                    console.log("Email updated successfully to:", newEmail);
+                })
+                .catch((error) => {
+                    console.error("Error updating email:", error);
+                });
+            } 
+            else {
+                console.log("No new email provided.");
+            }
+        })
+        .catch((error) => {
+            console.error("Error reauthenticating user:", error);
+        });
+    } 
+    else {
+        console.log("No current password provided.");
+    }
+}
 
 
 function loginUser(user, idToken) {
