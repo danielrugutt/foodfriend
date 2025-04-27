@@ -38,12 +38,12 @@ app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevent JavaScript access to coo
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=1)  # Adjust session expiration as needed
 app.config['SESSION_REFRESH_EACH_REQUEST'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Can be 'Strict', 'Lax', or 'None'
+CORS(app, supports_credentials=True) # Secure cross origin requests support
 
 # Firebase Admin SDK setup
 cred = credentials.Certificate("firebase-auth.json")
 firebase_admin.initialize_app(cred)
 firestore_db = firestore.client()
-CORS(app)
 database = Database(app)
 db = database.initialize_database()
 
