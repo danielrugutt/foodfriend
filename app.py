@@ -197,7 +197,8 @@ def recipe(recipe_id):
 
 @app.route('/recipe/<int:recipe_id>/export', methods=['GET'])
 def export_recipe(recipe_id):
-    return RecipeService.export_recipe(recipe_id)
+    export_type = request.args.get('type')
+    return RecipeService.export_recipe(recipe_id, export_type)
 
 @app.route('/login')
 def login():
@@ -311,6 +312,13 @@ def lists():
 @auth_required
 def profile():
     return render_template('profile.html')
+
+@app.route('/profile/email-change', methods=["POST"])
+@auth_required
+def change_email():
+    uid = session.get("uid")
+    new_user_email = request.form.get("emailChangeInput")
+    return
 
 @app.route('/delete-account', methods=['POST'])
 @auth_required

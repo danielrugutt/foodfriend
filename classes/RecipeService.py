@@ -42,14 +42,13 @@ class RecipeService:
         return render_template("recipe.html", recipe=recipe, user_lists=user_lists, uid=uid)
 
     @staticmethod
-    def export_recipe(recipe_id):
+    def export_recipe(recipe_id, export_type):
         """ Exports the given recipe in either an email or PDF format """
         recipe = RecipeService.get_recipe_from_database(recipe_id)
 
         if recipe is None:
             return "Recipe not found", 404
 
-        export_type = request.args.get('type')
         exporter = FactoryMethod.create_exporter(recipe, export_type)
 
         return exporter.exportRecipe()
