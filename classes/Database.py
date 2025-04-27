@@ -6,6 +6,8 @@ from models.RecipeIngredientModel import RecipeIngredientModel
 from models.RecipeListModel import RecipeListModel, RecipeListRecipeModel
 from models.UserModel import UserModel
 from classes.Recipe import RecipeBuilder
+from classes.DietaryPreference import DietaryPreference
+from models.DietaryPreferenceModel import DietaryPreferenceModel
 from db import db
 import os
 
@@ -54,11 +56,43 @@ class Database(metaclass=Singleton):
             db.session.commit()
 
         return recipe_object.ID
+    
+    def get_user_preferences(self, uid):
+        dietary_preference = DietaryPreferenceModel.query.filter_by(user_id=uid).first()
+        if dietary_preference is None:
+            dietary_preference = DietaryPreferenceModel(user_id=uid, exclude_cuisine="", exclude_ingredients="", max_sugar=999, intolerances="", diets="")
+            db.session.add(dietary_preference)
+            db.session.commit()
+        #print("TESTING",dietary_preference.exclude_cuisine)
+        exclude_cuisine = dietary_preference.exclude_cuisine.split(",") if dietary_preference.exclude_cuisine else []
+        exclude_ingredients = dietary_preference.exclude_ingredients.split(",") if dietary_preference.exclude_ingredients else []
+        max_sugar = dietary_preference.max_sugar
+        intolerances = dietary_preference.intolerances.split(",") if dietary_preference.intolerances else []
+        diets = dietary_preference.diets.split(",") if dietary_preference.diets else []
+
+        return DietaryPreference(exclude_cuisine, exclude_ingredients, max_sugar, intolerances, diets)
+
+    def set_user_preferences(self, uid, dietary_preference):
+        """ Given a user ID and a dietary preference object, sets the preferences in the database """
+        with self.app.app_context():
+            dietary_preference_model = DietaryPreferenceModel.query.filter_by(user_id=uid).first()
+
+            if dietary_preference_model is None:
+                dietary_preference_model = DietaryPreferenceModel(user_id=uid)
+
+            dietary_preference_model.exclude_cuisine = ",".join(dietary_preference.exclude_cuisine)
+            dietary_preference_model.exclude_ingredients = ",".join(dietary_preference.exclude_ingredients)
+            dietary_preference_model.max_sugar = dietary_preference.max_sugar
+            dietary_preference_model.intolerances = ",".join(dietary_preference.intolerances)
+            dietary_preference_model.diets = ",".join(dietary_preference.diets)
+
+            db.session.add(dietary_preference_model)
+            db.session.commit()
 
     def get_recipe(self, recipe_id):
         """ Grabs a recipe model from the database and converts it to a recipe object """
         recipe_model = RecipeModel.query.get(recipe_id)
-
+        
         if recipe_model:
             return self.to_recipe_object(recipe_model)
         else:

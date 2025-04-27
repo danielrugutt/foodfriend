@@ -13,15 +13,17 @@
     <h1>Profile</h1>
         <div>
             <label>Change email:</label>
-            <input type="text" id="emailChangeInput" />
-            <button type="button" id="changeEmail">Add</button>
+            <input type="text" id="emailChangeInput"/>
+<!--            <button type="button" id="changeEmail">Add</button>-->
         </div>
 
-        <div>
-            <label>Change name:</label>
-            <input type="text" id="nameChangeInput" />
-            <button type="button" id="changeName">Add</button>
+        <br>
+
+        <div id="passwordPopup">
+            <input type="password" id="passwordInput" placeholder="Enter current password to change email"/>
+            <button id="confirmPasswordButton">Confirm</button>
         </div>
+
 
         <div id="delete-account-div">
           <h2>Account Deletion</h2>
@@ -42,6 +44,7 @@
     </main>
 0
     <script src="../static/delete-account.js"></script>
+    <script src="../static/change-email.js" type="module"></script>
     <script src="{{ url_for('static', filename='login-auth.js') }}" type="module"></script>
   </body>
 </html>

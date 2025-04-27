@@ -54,9 +54,6 @@ const settingsURL       = window.location.origin + '/settings';
 /* === Main Code === */
 
 /* = Functions - Firebase - Authentication = */
-
-
-
 onAuthStateChanged(auth, (user) => {
     if (user) {
         console.log("User is signed in: ", user.email);
@@ -207,60 +204,6 @@ function resetPassword() {
         alert("Error sending reset email: ", errorCode);
     });
 }
-
-
-async function changeEmail() {
-    const user = auth.currentUser;
-
-    if (!user) {
-        console.error("No user is currently signed in.");
-        return;
-    }
-
-    const currentPassword = prompt("Please enter your current password to verify your identity:");
-    if (!currentPassword) {
-        console.log("No current password provided.");
-        return;
-    }
-
-    try {
-        const credential = EmailAuthProvider.credential(user.email, currentPassword);
-
-        // Reauthenticate the user
-        await reauthenticateWithCredential(user, credential);
-        console.log("Reauthentication successful.");
-
-        const newEmail = prompt("Please enter your new email address:");
-        if (!newEmail) {
-            console.log("No new email provided.");
-            return;
-        }
-
-        // Update the user's email
-        await updateEmail(user, newEmail);
-        console.log("Email updated successfully to:", newEmail);
-
-        // Send a verification email to the new address
-        await sendEmailVerification(user);
-        alert("Verification email sent to: " + user.email);
-
-    } 
-    catch (error) {
-        if (error.code === 'auth/wrong-password') {
-            alert("Incorrect password. Please try again.");
-        } else if (error.code === 'auth/invalid-email') {
-            alert("The new email address is invalid.");
-        } else if (error.code === 'auth/email-already-in-use') {
-            alert("This email address is already associated with another account.");
-        } else if (error.code === 'auth/requires-recent-login') {
-            alert("Please sign in again and retry this action for security reasons.");
-        } else {
-            alert("An error occurred: " + error.message);
-        }
-        console.error("Error during email change process:", error);
-    }
-}
-
 
 
 function loginUser(user, idToken) {
