@@ -31,6 +31,8 @@ app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
 
 RecipeService.init(app)
+SearchService.init(app)
+
 
 # Configure session cookie settings
 app.config['SESSION_COOKIE_SECURE'] = True  # Ensure cookies are sent over HTTPS
@@ -172,8 +174,8 @@ def home():
 
 @app.route('/search', methods=['GET', 'POST'])
 def search():
-    global test_user
-    return SearchService.search(test_user,request)
+    uid = session.get("uid")
+    return SearchService.search(uid,request)
     
 
 @app.route('/search-similar/<int:recipe_id>/<string:orig_recipe>', methods=['GET', 'POST'])
@@ -184,9 +186,10 @@ def search_similar(recipe_id,orig_recipe):
 @app.route('/settings', methods=['POST','GET'])
 def settings():
     #TESTING ONLY
-    global test_user
+    #global test_user
+    uid = session.get("uid")
     #if needed saved the changes to dietary pref to DB either here or in the method which ever is easier
-    return SearchService.settings(test_user, request.method)
+    return SearchService.settings(uid, request.method)
 
 @app.route('/recipe/<int:recipe_id>')
 def recipe(recipe_id):
