@@ -18,6 +18,7 @@ from models.PlannedMeal import PlannedMeal
 from models.RecipeIngredientModel import RecipeIngredientModel
 from models.RecipeModel import RecipeModel
 from classes.RecipeService import RecipeService
+from classes.SearchService import SearchService
 import secrets
 import os
 import sys
@@ -171,44 +172,21 @@ def home():
 
 @app.route('/search', methods=['GET', 'POST'])
 def search():
-    #for testing between setting and searching
     global test_user
-    search_query = None
-    if request.method == 'GET':
-         search_query = request.args.get('search_query') # For GET requests
-    #read from seach bar, search bar is what directs to /search
-    user_diet=test_user
-    user_search=SpoonacularConnection()
-    response=user_search.getSearchResults(search_query,test_user)
-
-    if 'results' in response:
-        for recipe in response['results']:
-            print(f"Recipe Name: {recipe["title"]} Recipe ID:{recipe["id"]}",file=sys.stderr)
-    else:
-        print("No results found!")
-
-    return render_template("search_results.html", results=response,search_query=search_query)
+    return SearchService.search(test_user,request)
+    
 
 @app.route('/search-similar/<int:recipe_id>/<string:orig_recipe>', methods=['GET', 'POST'])
 def search_similar(recipe_id,orig_recipe):
-    user_search=SpoonacularConnection()
-    response=user_search.getSimilarResults(recipe_id)
-    return render_template("similar_results.html", results=response,search_query=orig_recipe)
+    return SearchService.search_similar(recipe_id,orig_recipe)
+    
 
 @app.route('/settings', methods=['POST','GET'])
 def settings():
     #TESTING ONLY
     global test_user
-    user_preferences = { "excludedCuisines": test_user.exclude_cuisine,
-                        "excludedIngredients": test_user.exclude_ingredients,
-                        "maxSugar": test_user.max_sugar,
-                        "intolerances": test_user.intolerances,
-                        "diets": test_user.diets}
-    if request.method=='POST':
-        data=request.get_json()
-        test_user=DietaryPreference(data['excludedCuisines'],data['excludedIngredients'],data['maxSugar'],data['intolerances'],data['diets'])
-        print(data)
-    return render_template("settings.html",preferences=user_preferences) 
+    #if needed saved the changes to dietary pref to DB either here or in the method which ever is easier
+    return SearchService.settings(test_user, request.method)
 
 @app.route('/recipe/<int:recipe_id>')
 def recipe(recipe_id):
