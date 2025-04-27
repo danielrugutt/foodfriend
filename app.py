@@ -309,6 +309,13 @@ def lists():
 def profile():
     return render_template('profile.html')
 
+@app.route('/profile/email-change', methods=["POST"])
+@auth_required
+def change_email():
+    uid = session.get("uid")
+    new_user_email = request.form.get("emailChangeInput")
+    return
+
 @app.route('/delete-account', methods=['POST'])
 @auth_required
 def delete_account():
