@@ -2,18 +2,26 @@ from flask import Flask, render_template, request
 from classes.DietaryPreference import DietaryPreference
 from classes.SpoonacularConnection import SpoonacularConnection
 from classes.Recipe import *
+from classes.Database import Database
 import sys
 
 
 class SearchService:
-        
+    database = None
+
+    @classmethod
+    def init(cls, app):
+        """ Initializes the database and makes it a class variable. Must be initialized before using in app.py """
+        cls.database = Database(app)
+        cls.database.initialize_database()
+
     @staticmethod
     def search(user, request):
+        user_diet=SearchService.database.get_user_preferences(user)
         search_query = None
         if request.method == 'GET':
             search_query = request.args.get('search_query') # For GET requests
         #read from seach bar, search bar is what directs to /search
-        user_diet=user
         user_search=SpoonacularConnection()
         response=user_search.getSearchResults(search_query,user_diet)
 
@@ -34,14 +42,16 @@ class SearchService:
 
     @staticmethod
     def settings(user, request_method):
-        user_preferences = { "excludedCuisines": user.exclude_cuisine,
-                            "excludedIngredients": user.exclude_ingredients,
-                            "maxSugar": user.max_sugar,
-                            "intolerances": user.intolerances,
-                            "diets": user.diets}
+        user_preferences=SearchService.database.get_user_preferences(user)
+
+        shown_prefs = { "excludedCuisines": user_preferences.exclude_cuisine,
+                            "excludedIngredients": user_preferences.exclude_ingredients,
+                            "maxSugar": user_preferences.max_sugar,
+                            "intolerances": user_preferences.intolerances,
+                            "diets": user_preferences.diets}
         if request_method=='POST':
             data=request.get_json()
             new_pref=DietaryPreference(data['excludedCuisines'],data['excludedIngredients'],data['maxSugar'],data['intolerances'],data['diets'])
-            user.update_preferences(new_pref)
+            SearchService.database.set_user_preferences(user, new_pref)
 
-        return render_template("settings.html",preferences=user_preferences)
+        return render_template("settings.html",preferences=shown_prefs)
