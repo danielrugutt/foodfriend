@@ -29,10 +29,10 @@ const errorMsgGoogleSignIn = document.getElementById("google-signin-error-messag
 
 
 /* == UI - Event Listeners == */
-signInWithGoogleButtonEl && signInWithGoogleButtonEl.addEventListener("click", authSignInWithGoogle);
+signInWithGoogleButtonEl && signInWithGoogleButtonEl.addEventListener("click", authWithGoogle);
 signInButtonEl           && signInButtonEl.addEventListener("click", authSignInWithEmail);
 signOutButtonEl          && signOutButtonEl.addEventListener('click', logout);
-signUpWithGoogleButtonEl && signUpWithGoogleButtonEl.addEventListener("click", authSignUpWithGoogle);
+signUpWithGoogleButtonEl && signUpWithGoogleButtonEl.addEventListener("click", authWithGoogle);
 forgotPasswordButtonEl   && forgotPasswordButtonEl.addEventListener("click", resetPassword);
 createAccountButtonEl    && createAccountButtonEl.addEventListener("submit", (e) => {
     e.preventDefault();
@@ -47,8 +47,8 @@ const forgotPasswordURL = window.location.origin + '/reset-password';
 const dashboardURL      = window.location.origin + '/dashboard';
 const loginURL          = window.location.origin + '/login';
 const signupURL         = window.location.origin + '/signup';
-const profileURL         = window.location.origin + '/profile';
-const settingsURL         = window.location.origin + '/settings';
+const profileURL        = window.location.origin + '/profile';
+const settingsURL       = window.location.origin + '/settings';
 
 
 /* === Main Code === */
@@ -94,18 +94,16 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
-// Function to sign in with Google authentication
-async function authSignInWithGoogle() {
-    // Configure Google Auth provider with custom parameters
+
+
+async function authWithGoogle() {
     provider.setCustomParameters({
-        'prompt': 'select_account'
+        prompt: 'select_account'
     });
 
     try {
-        // Attempt to sign in with a popup and retrieve user data
         const result = await signInWithPopup(auth, provider);
 
-        // Check if the result or user object is undefined or null
         if (!result || !result.user) {
             throw new Error('Authentication failed: No user data returned.');
         }
@@ -113,46 +111,19 @@ async function authSignInWithGoogle() {
         const user = result.user;
         const email = user.email;
 
-        // Ensure the email is available in the user data
         if (!email) {
             throw new Error('Authentication failed: No email address returned.');
         }
 
-        // Retrieve ID token for the user
         const idToken = await user.getIdToken();
 
-        // Log in the user using the obtained ID token
+        // Log the user in (your app logic)
         loginUser(user, idToken);
 
     } catch (error) {
-        // Handle errors by logging and potentially updating the UI
-        handleLogging(error, 'Error during sign-in with Google');
+        handleLogging(error, 'Error during Google authentication');
     }
 }
-
-
-
-// Function to create new account with Google auth - will also sign in existing users
-async function authSignUpWithGoogle() {
-    provider.setCustomParameters({
-        'prompt': 'select_account'
-    });
-
-    try {
-        const result = await signInWithPopup(auth, provider);
-        const user = result.user;
-        const email = user.email;
-
-        // Sign in user
-        const idToken = await user.getIdToken();
-        loginUser(user, idToken);
-    } catch (error) {
-        // The AuthCredential type that was used or other errors.
-        console.error("Error during Google signup: ", error.message);
-        // Handle error appropriately here, e.g., updating UI to show an error message
-    }
-}
-
 
 
 
