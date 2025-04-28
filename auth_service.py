@@ -63,3 +63,14 @@ def logout():
     response = make_response(redirect(url_for('login')))
     response.set_cookie('session', '', expires=0)  # Optionally clear the session cookie
     return response
+
+def delete_account():
+    uid = session.get("uid")
+    try:
+        # Delete the user using Firebase Admin SDK
+        auth.delete_user(uid)
+        session.pop('user', None)  # Remove user from session
+        response = make_response(redirect(url_for('login')))
+        return response
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

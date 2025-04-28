@@ -23,7 +23,7 @@ import os
 import sys
 import firebase_admin
 import json
-from auth_service import authorize, auth_required, logout, init_auth_service
+from auth_service import authorize, auth_required, delete_account, logout, init_auth_service, delete_account
 
 load_dotenv()
 
@@ -274,16 +274,8 @@ def change_email():
 
 @app.route('/delete-account', methods=['POST'])
 @auth_required
-def delete_account():
-    uid = session.get("uid")
-    try:
-        # Delete the user using Firebase Admin SDK
-        auth.delete_user(uid)
-        session.pop('user', None)  # Remove user from session
-        response = make_response(redirect(url_for('login')))
-        return response
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+def delete_account_route():
+    return delete_account()
 
 if __name__ == '__main__':
     app.run(debug=True)
