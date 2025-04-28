@@ -1,4 +1,5 @@
 from flask import Flask, redirect, render_template, request, make_response, session, abort, jsonify, url_for
+from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from functools import wraps
 from firebase_admin import credentials, firestore, auth
@@ -9,15 +10,15 @@ from classes.DietaryPreference import DietaryPreference
 from classes.SpoonacularConnection import SpoonacularConnection
 from classes.SpoonacularRecipeAdapter import SpoonacularRecipeAdapter
 from classes.Recipe import *
-from classes.Exporter import *
 from classes.Database import Database
 from models.UserModel import UserModel
 from models.DietaryPreferenceModel import DietaryPreferenceModel
 from models.IngredientModel import IngredientModel
 from models.PlannedMeal import PlannedMeal
 from models.RecipeIngredientModel import RecipeIngredientModel
-from models.RecipeListModel import RecipeListModel
 from models.RecipeModel import RecipeModel
+from classes.RecipeService import RecipeService
+from classes.SearchService import SearchService
 import secrets
 import os
 import sys
@@ -29,18 +30,22 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
 
+RecipeService.init(app)
+SearchService.init(app)
+
+
 # Configure session cookie settings
 app.config['SESSION_COOKIE_SECURE'] = True  # Ensure cookies are sent over HTTPS
 app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevent JavaScript access to cookies
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=1)  # Adjust session expiration as needed
 app.config['SESSION_REFRESH_EACH_REQUEST'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Can be 'Strict', 'Lax', or 'None'
+CORS(app, supports_credentials=True) # Secure cross origin requests support
 
 # Firebase Admin SDK setup
 cred = credentials.Certificate("firebase-auth.json")
 firebase_admin.initialize_app(cred)
 firestore_db = firestore.client()
-
 database = Database(app)
 db = database.initialize_database()
 
@@ -94,6 +99,13 @@ def test_setup():
 
     return "Test data created and session set!"
 
+##### TESTING SECTION ENDS HERE #####
+
+def get_current_user():
+    uid = session.get("uid")
+    if not uid:
+        return None
+    return UserModel.query.filter_by(id=uid).first()
 
 """ AUTHENTICATION ROUTES """
 # Add this to any request needing authentication
@@ -108,30 +120,43 @@ def auth_required(f):
         
     return decorated_function
 
+def get_bearer_token(auth_header):
+    if not auth_header or not auth_header.startswith('Bearer '):
+        return None
+    return auth_header.split(' ')[1]
 
 @app.route('/auth', methods=['POST'])
 def authorize():
-    token = request.headers.get('Authorization')
-
-    if not token or not token.startswith('Bearer '):
-        return "Unauthorized", 401
-
-    token = token[7:]  # Strip off 'Bearer ' to get the actual token
+    token = get_bearer_token(request.headers.get('Authorization'))
+    if not token:
+        return jsonify({'error': 'Authorization header missing or invalid'}), 401
 
     try:
-        decoded_token = auth.verify_id_token(token, check_revoked=True, clock_skew_seconds=60) # Validate token here
-        session['user'] = decoded_token # Add user to session
-
-        # checking if user is in local database, making them there if not
+        # Validate the token
+        decoded_token = auth.verify_id_token(token, check_revoked=True, clock_skew_seconds=60)
         uid = decoded_token['uid']
-        session['uid'] = uid
         email = decoded_token.get('email')
-        database.check_and_create_user(uid, email)
 
-        return redirect(url_for('dashboard'))
-    
-    except:
-        return "Unauthorized", 401
+        # Add user to session
+        session['user'] = {'uid': uid, 'email': email}
+        session['uid'] = uid
+
+        # Ensure user exists in the local database
+        try:
+            print(f"Creating/checking user with UID: {uid}, email: {email}")
+            database.check_and_create_user(uid, email)
+        except Exception as e:
+            print(f"Error interacting with the database: {e}", file=sys.stderr)
+            import traceback
+            traceback.print_exc()  # Add this to see the full traceback in logs
+            return jsonify({'error': 'Internal server error'}), 500
+
+        # Return success response
+        return jsonify({'message': 'User authenticated successfully'}), 200
+
+    except Exception as e:
+        print(f"Error verifying token: {e}", file=sys.stderr)
+        return jsonify({'error': 'Unauthorized'}), 401
 
 
 """ GUEST ROUTES """
@@ -141,69 +166,31 @@ def home():
 
 @app.route('/search', methods=['GET', 'POST'])
 def search():
-    #for testing between setting and searching
-    global test_user
-    search_query = None
-    if request.method == 'GET':
-         search_query = request.args.get('search_query') # For GET requests
-    #read from seach bar, search bar is what directs to /search
-    user_diet=test_user
-    user_search=SpoonacularConnection()
-    response=user_search.getSearchResults(search_query,test_user)
+    uid = session.get("uid")
+    return SearchService.search(uid,request)
+    
 
-    if 'results' in response:
-        for recipe in response['results']:
-            print(f"Recipe Name: {recipe["title"]} Recipe ID:{recipe["id"]}",file=sys.stderr)
-    else:
-        print("No results found!")
-
-    return render_template("search_results.html", results=response,search_query=search_query)
-
+@app.route('/search-similar/<int:recipe_id>/<string:orig_recipe>', methods=['GET', 'POST'])
+def search_similar(recipe_id,orig_recipe):
+    return SearchService.search_similar(recipe_id,orig_recipe)
+    
 
 @app.route('/settings', methods=['POST','GET'])
 def settings():
     #TESTING ONLY
-    global test_user
-    user_preferences = { "excludedCuisines": test_user.exclude_cuisine,
-                        "excludedIngredients": test_user.exclude_ingredients,
-                        "maxSugar": test_user.max_sugar,
-                        "intolerances": test_user.intolerances,
-                        "diets": test_user.diets}
-    if request.method=='POST':
-        data=request.get_json()
-        test_user=DietaryPreference(data['excludedCuisines'],data['excludedIngredients'],data['maxSugar'],data['intolerances'],data['diets'])
-        print(data)
-    return render_template("settings.html",preferences=user_preferences) 
+    #global test_user
+    uid = session.get("uid")
+    #if needed saved the changes to dietary pref to DB either here or in the method which ever is easier
+    return SearchService.settings(uid, request.method)
 
 @app.route('/recipe/<int:recipe_id>')
 def recipe(recipe_id):
-    recipe = database.get_recipe(recipe_id)
-
-    if recipe is None:
-        spoonacular_connection=SpoonacularConnection()
-        recipe=spoonacular_connection.getRecipe(recipe_id)
-
-    if recipe is None:
-        return "Recipe not found", 404
-
-    return render_template("recipe.html", recipe=recipe)
+    return RecipeService.format_recipe_page(recipe_id, session)
 
 @app.route('/recipe/<int:recipe_id>/export', methods=['GET'])
 def export_recipe(recipe_id):
-    recipe = database.get_recipe(recipe_id)
-
-    if recipe is None:
-        spoonacular_connection=SpoonacularConnection()
-        recipe=spoonacular_connection.getRecipe(recipe_id)
-
-    if recipe is None:
-        return "Recipe not found", 404
-
     export_type = request.args.get('type')
-    exporter = FactoryMethod.create_exporter(recipe, export_type)
-
-    return exporter.exportRecipe()
-
+    return RecipeService.export_recipe(recipe_id, export_type)
 
 @app.route('/login')
 def login():
@@ -280,7 +267,6 @@ def add_meal():
     if not recipe or recipe not in user.bookmarked_recipes:
         return jsonify({"error": "Invalid recipe"}), 400
 
-
     new_meal = PlannedMeal(
         user_id=user.id,
         recipe_id=recipe_id,
@@ -293,7 +279,6 @@ def add_meal():
 
 
     return jsonify({"message": "Meal added"}), 201
-
 
 
 """ LOGGED IN USER ROUTES """
@@ -331,41 +316,25 @@ def get_planned_meals():
 
 @app.route('/recipe/<int:recipe_id>/bookmark/')
 @auth_required
-def bookmark(recipe_id):
-    recipe = database.get_recipe(recipe_id)
+def save_to_list(recipe_id):
+    return RecipeService.bookmark_recipe(recipe_id, session)
 
-    if recipe is None:
-        spoonacular_connection=SpoonacularConnection()
-        recipe=spoonacular_connection.getRecipe(recipe_id)
-
-    if recipe is None:
-        return "Recipe not found", 404
-
-    uid = session.get("uid")
-    database.add_recipe_to_list(uid, recipe_id)
-    return "Saving recipe " + str(recipe_id) + " with user " + str(uid) + " to bookmarks"
-
-# this is duplication of the above method, will try to fix it later
-@app.route('/recipe/<int:recipe_id>/bookmark/<int:list_id>')
+@app.route('/lists')
 @auth_required
-def add_to_list(recipe_id, list_id):
-    recipe = database.get_recipe(recipe_id)
-
-    if recipe is None:
-        spoonacular_connection=SpoonacularConnection()
-        recipe=spoonacular_connection.getRecipe(recipe_id)
-
-    if recipe is None:
-        return "Recipe not found", 404
-
-    uid = session.get("uid")
-    database.add_recipe_to_list(uid, recipe_id, list_id)
-    return "Saving recipe " + str(recipe_id) + " with user " + str(uid) + " to list " + str(list_id)
+def lists():
+    return RecipeService.get_lists(session)
 
 @app.route('/profile')
 @auth_required
 def profile():
     return render_template('profile.html')
+
+@app.route('/profile/email-change', methods=["POST"])
+@auth_required
+def change_email():
+    uid = session.get("uid")
+    new_user_email = request.form.get("emailChangeInput")
+    return
 
 @app.route('/delete-account', methods=['POST'])
 @auth_required
