@@ -69,37 +69,6 @@ taratorRecipe = (
 
 database.insert_recipe(taratorRecipe)
 
-def get_current_user():
-    uid = session.get("uid")
-    if not uid:
-        return None
-    return UserModel.query.filter_by(firebase_uid=uid).first()
-
-@app.route('/test-setup')
-def test_setup():
-
-    # 3. Bookmark the recipe
-    if recipe not in get_current_user().bookmarked_recipes:
-        get_current_user().bookmarked_recipes.append(recipe)
-
-    # 4. Add a planned meal
-    planned_meal = PlannedMeal(
-        user=get_current_user(),
-        recipe=recipe,
-        title="Lunch: Test Pasta",
-        datetime=datetime.now(),
-        notes="Just testing calendar"
-    )
-    db.session.add(planned_meal)
-
-    db.session.commit()
-
-    # Simulate login
-    session['uid'] = get_current_user()
-    session['user'] = { "uid": get_current_user(), "email": "test@example.com" }
-
-    return "Test data created and session set!"
-
 ##### TESTING SECTION ENDS HERE #####
 
 def get_current_user():
@@ -233,11 +202,10 @@ def calendar():
 def dashboard():
     return render_template('dashboard.html')
 
-@app.route("/add-meal", methods=["POST"])
+@app.route('/add-meal', methods=["POST"])
 @auth_required
 def add_meal():
     data = request.get_json()
-    print("Request JSON:", data)
 
     title = data.get("title")
     start_time = data.get("startTime")  # e.g., "14:00"
@@ -292,7 +260,7 @@ def add_meal():
 def get_planned_meals():
     user = get_current_user()
     if not user:
-        return jsonify({"error": "User not authenticated"}), 401
+        return jsonify([])
 
     meals = PlannedMeal.query.filter_by(user_id=user.id).all()
 
@@ -313,30 +281,54 @@ def get_planned_meals():
 
     return jsonify(events)
 
-@app.route('/bookmarked-recipes')
+@app.route('/user-recipe-lists')
 @auth_required
-def get_bookmarked_recipes():
+def get_user_recipe_lists():
+    user_id = session.get("uid")
+    if not user_id:
+        return redirect('/login')
+
+    # Get all recipe lists for the user
+    recipe_lists = RecipeListModel.query.filter_by(user_id=user_id).all()
+
+    # Format data: group recipes by recipe list
+    response = []
+    for recipe_list in recipe_lists:
+        response.append({
+            'list_id': recipe_list.id,
+            'list_name': recipe_list.name,
+            'recipes': [
+                {
+                    'id': recipe.id,
+                    'name': recipe.title,
+                    # Add other fields if needed
+                }
+                for recipe in recipe_list.recipe_objects()
+            ]
+        })
+
+    return jsonify(response)
+
+@app.route('/all-recipes')
+@auth_required
+def get_all_recipes():
     test_user_id = session.get("uid")
     if not test_user_id:
         return redirect('/login')
 
-    # Get the user's "Bookmarks" recipe list
-    bookmarks_list = RecipeListModel.query.filter_by(user_id=test_user_id, name="Bookmarks").first()
+    # Fetch all recipe lists for the user
+    recipe_lists = RecipeListModel.query.filter_by(user_id=test_user_id).all()
 
-    if not bookmarks_list:
-        return jsonify([])  # Return empty if no list named 'Bookmarks'
+    grouped_recipes = []
+    for recipe_list in recipe_lists:
+        # Get recipes for each list
+        recipes = recipe_list.recipe_objects()
+        grouped_recipes.append({
+            'list_name': recipe_list.name,
+            'recipes': [{'id': recipe.id, 'name': recipe.title} for recipe in recipes]
+        })
 
-    # Get actual RecipeModel objects
-    recipes = bookmarks_list.recipe_objects()
-
-    return jsonify([
-        {
-            'id': recipe.id,
-            'name': recipe.title,
-            # Add more fields if needed
-        } for recipe in recipes
-    ])
-
+    return jsonify(grouped_recipes)
 
 @app.route('/recipe/<int:recipe_id>/bookmark/', methods=["POST"])
 @auth_required

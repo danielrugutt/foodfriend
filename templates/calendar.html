@@ -79,10 +79,13 @@
         <label for="startTime">Start Time:</label>
         <input type="text" id="startTime" required>
 
+
         <label for="recipeSelect">Choose a Recipe:</label>
         <select id="recipeSelect" required>
           <option value="">-- Select a recipe --</option>
+          <!-- Recipes will be dynamically added here -->
         </select>
+
 
         <label for="mealNotes">Notes:</label>
         <textarea id="mealNotes" rows="4"></textarea>
@@ -113,25 +116,38 @@
       });
 
       calendar.render();
-      loadBookmarkedRecipes(); // Fetch and populate recipe dropdown
+      loadAllRecipes(); // Fetch and populate recipe list dropdown
     });
 
-    async function loadBookmarkedRecipes() {
-      try {
-        const response = await fetch('/bookmarked-recipes');
-        const data = await response.json();
-        const select = document.getElementById('recipeSelect');
+    async function loadAllRecipes() {
+    try {
+      const response = await fetch('/all-recipes');
+      const data = await response.json();
+      const recipeSelect = document.getElementById('recipeSelect');
 
-        data.forEach(recipe => {
+      // Clear previous options
+      recipeSelect.innerHTML = '<option value="">-- Select a recipe --</option>';
+
+      // Loop through the grouped recipes and create optgroups
+      data.forEach(list => {
+        const optgroup = document.createElement('optgroup');
+        optgroup.label = list.list_name; // Set the label as the list name
+
+        // Add recipes under this optgroup
+        list.recipes.forEach(recipe => {
           const option = document.createElement('option');
           option.value = recipe.id;
           option.textContent = recipe.name;
-          select.appendChild(option);
+          optgroup.appendChild(option);
         });
-      } catch (err) {
-        console.error("Failed to load recipes", err);
-      }
+
+        // Append optgroup to select element
+        recipeSelect.appendChild(optgroup);
+      });
+    } catch (err) {
+      console.error("Failed to load recipes", err);
     }
+  }
 
     // Modal logic
     const modal = document.getElementById('mealModal');
