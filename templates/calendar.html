@@ -23,7 +23,7 @@
 
     .modal-content {
       background-color: #fff;
-      padding: 20px;
+      padding: 20px 24px;
       border-radius: 12px;
       width: 300px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.3);
@@ -39,10 +39,10 @@
       cursor: pointer;
     }
 
-    #mealForm input, #mealForm textarea {
+    #mealForm input, #mealForm textarea, #mealForm select {
       width: 100%;
       margin-bottom: 10px;
-      padding: 8px;
+      padding: 8px 6px;
       border-radius: 6px;
       border: 1px solid #ccc;
     }
@@ -79,6 +79,11 @@
         <label for="startTime">Start Time:</label>
         <input type="text" id="startTime" required>
 
+        <label for="recipeSelect">Choose a Recipe:</label>
+        <select id="recipeSelect" required>
+          <option value="">-- Select a recipe --</option>
+        </select>
+
         <label for="mealNotes">Notes:</label>
         <textarea id="mealNotes" rows="4"></textarea>
 
@@ -99,14 +104,34 @@
         dateClick: function(info) {
           selectedDate = info.dateStr;
           document.getElementById('mealTitle').value = '';
+          document.getElementById('startTime').value = '';
           document.getElementById('mealNotes').value = '';
+          document.getElementById('recipeSelect').selectedIndex = 0;
           document.getElementById('mealModal').style.display = 'flex';
         },
         events: '/planned-meals'
       });
 
       calendar.render();
+      loadBookmarkedRecipes(); // Fetch and populate recipe dropdown
     });
+
+    async function loadBookmarkedRecipes() {
+      try {
+        const response = await fetch('/bookmarked-recipes');
+        const data = await response.json();
+        const select = document.getElementById('recipeSelect');
+
+        data.forEach(recipe => {
+          const option = document.createElement('option');
+          option.value = recipe.id;
+          option.textContent = recipe.name;
+          select.appendChild(option);
+        });
+      } catch (err) {
+        console.error("Failed to load recipes", err);
+      }
+    }
 
     // Modal logic
     const modal = document.getElementById('mealModal');
@@ -122,16 +147,16 @@
       e.preventDefault();
 
       const title = document.getElementById('mealTitle').value.trim();
+      const startTime = document.getElementById('startTime').value.trim();
       const notes = document.getElementById('mealNotes').value.trim();
-
-      // Optional: handle recipe_id if needed
-      const recipeId = null;
+      const recipeId = parseInt(document.getElementById('recipeSelect').value);
 
       fetch('/add-meal', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: title,
+          startTime: startTime,
           notes: notes,
           recipe_id: recipeId,
           start: selectedDate

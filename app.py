@@ -17,6 +17,7 @@ from models.IngredientModel import IngredientModel
 from models.PlannedMeal import PlannedMeal
 from models.RecipeIngredientModel import RecipeIngredientModel
 from models.RecipeModel import RecipeModel
+from models.RecipeListModel import RecipeListModel
 from classes.RecipeService import RecipeService
 from classes.SearchService import SearchService
 import secrets
@@ -226,68 +227,68 @@ def calendar():
     return render_template('calendar.html')
 
 
-
-
-@app.route('/bookmarked-recipes')
-def get_bookmarked_recipes():
-    print("Hit /bookmarked-recipes")
-
-    test_user_id = session.get("uid")
-    if not test_user_id:
-        return redirect('/login')
-
-    user = db.session.query(UserModel).filter_by(id=test_user_id).first()
-    if not user:
-        return jsonify([])
-
-    recipes = user.bookmarked_recipes
-    return jsonify([{
-        'id': r.id,
-        'name': r.name,
-        # Add other fields if needed
-    } for r in recipes])
-
-
-
-@app.route('/add-meal', methods=['POST'])
-def add_meal():
-    data = request.json
-    title = data['title']
-    recipe_id = data['recipe_id']
-    start = data['start']  # ISO 8601 string: "2025-04-14T12:00:00"
-
-
-    day = datetime.strptime(start.split('T')[0], "%Y-%m-%d").date()
-    time_str = start.split('T')[1][:5]
-    time_obj = datetime.strptime(time_str, "%H:%M").time()
-
-
-    user = get_current_user()  # However you're managing sessions
-    recipe = db.session.get(RecipeModel, recipe_id)
-    if not recipe or recipe not in user.bookmarked_recipes:
-        return jsonify({"error": "Invalid recipe"}), 400
-
-    new_meal = PlannedMeal(
-        user_id=user.id,
-        recipe_id=recipe_id,
-        title=title,
-        day=day,
-        time=time_obj
-    )
-    db.session.add(new_meal)
-    db.session.commit()
-
-
-    return jsonify({"message": "Meal added"}), 201
-
-
 """ LOGGED IN USER ROUTES """
 @app.route('/dashboard')
 @auth_required
 def dashboard():
     return render_template('dashboard.html')
 
+@app.route("/add-meal", methods=["POST"])
+@auth_required
+def add_meal():
+    data = request.get_json()
+    print("Request JSON:", data)
+
+    title = data.get("title")
+    start_time = data.get("startTime")  # e.g., "14:00"
+    notes = data.get("notes")
+    recipe_id = data.get("recipe_id")
+    start_date = data.get("start")      # e.g., "2025-04-29"
+
+    if not all([title, start_time, start_date]):
+        return jsonify({"error": "Missing required fields"}), 400
+
+    try:
+        combined_datetime = datetime.strptime(f"{start_date} {start_time}", "%Y-%m-%d %H:%M")
+    except ValueError:
+        return jsonify({"error": "Invalid date or time format"}), 400
+
+    user_id = session.get("uid")
+    if not user_id:
+        return jsonify({"error": "User not logged in"}), 401
+
+    user = db.session.get(UserModel, user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    recipe = db.session.get(RecipeModel, recipe_id) if recipe_id else None
+
+    # Optional: check recipe is in user's recipe lists (if needed)
+    if recipe:
+        user_recipe_ids = {
+            entry.recipe.id
+            for rl in user.recipe_lists
+            for entry in rl.recipes
+        }
+        if recipe.id not in user_recipe_ids:
+            return jsonify({"error": "Recipe not in user's lists"}), 400
+
+    new_meal = PlannedMeal(
+        title=title,
+        datetime=combined_datetime,
+        notes=notes,
+        user=user,
+        recipe=recipe if recipe else None
+    )
+
+    db.session.add(new_meal)
+    db.session.commit()
+
+    return jsonify({"message": "Meal added successfully"}), 200
+
+
 @app.route('/planned-meals')
+@auth_required
 def get_planned_meals():
     user = get_current_user()
     if not user:
@@ -301,7 +302,7 @@ def get_planned_meals():
         end_dt = start_dt + timedelta(hours=1)
 
         events.append({
-            "title": f"{meal.title} ({meal.recipe.name})",
+            "title": f"{meal.title} ({meal.recipe.title})",
             "start": start_dt.isoformat(),
             "end": end_dt.isoformat(),
             "extendedProps": {
@@ -312,9 +313,32 @@ def get_planned_meals():
 
     return jsonify(events)
 
+@app.route('/bookmarked-recipes')
+@auth_required
+def get_bookmarked_recipes():
+    test_user_id = session.get("uid")
+    if not test_user_id:
+        return redirect('/login')
+
+    # Get the user's "Bookmarks" recipe list
+    bookmarks_list = RecipeListModel.query.filter_by(user_id=test_user_id, name="Bookmarks").first()
+
+    if not bookmarks_list:
+        return jsonify([])  # Return empty if no list named 'Bookmarks'
+
+    # Get actual RecipeModel objects
+    recipes = bookmarks_list.recipe_objects()
+
+    return jsonify([
+        {
+            'id': recipe.id,
+            'name': recipe.title,
+            # Add more fields if needed
+        } for recipe in recipes
+    ])
 
 
-@app.route('/recipe/<int:recipe_id>/bookmark/')
+@app.route('/recipe/<int:recipe_id>/bookmark/', methods=["POST"])
 @auth_required
 def save_to_list(recipe_id):
     return RecipeService.bookmark_recipe(recipe_id, session)
