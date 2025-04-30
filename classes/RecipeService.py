@@ -1,4 +1,4 @@
-from flask import Flask, redirect, render_template, request, make_response, session, abort, jsonify, url_for
+from flask import Flask, redirect, render_template, request, make_response, session, abort, jsonify, url_for, flash
 from models.RecipeListModel import RecipeListModel
 from classes.SpoonacularConnection import SpoonacularConnection
 from classes.Database import Database
@@ -15,12 +15,13 @@ class RecipeService:
 
     @staticmethod
     def get_recipe_from_database(recipe_id):
-        """ Grabs the recipe from the database or from Spoonacular. Used in multiple other methods """
+        """ Grabs the recipe from the database or from Spoonacular, if not found within local database """
         recipe = RecipeService.database.get_recipe(recipe_id)
+        if recipe:
+            return recipe
 
-        if recipe is None:
-            spoon = SpoonacularConnection()
-            recipe = spoon.getRecipe(recipe_id)
+        recipe = SpoonacularConnection().getRecipe(recipe_id)
+        if recipe:
             RecipeService.database.insert_recipe(recipe)
 
         return recipe
@@ -31,7 +32,7 @@ class RecipeService:
         recipe = RecipeService.get_recipe_from_database(recipe_id)
 
         if recipe is None:
-            return "Recipe not found. (Van, comment out line 24 & 25 in RecipeService to get the error message/information back)", 404
+            return "Recipe not found.", 404
 
         uid = session.get("uid")
         user_lists = []
@@ -68,7 +69,9 @@ class RecipeService:
             list_id = RecipeService.database.create_named_list(uid, new_list_name)
 
         RecipeService.database.add_recipe_to_list(uid, recipe_id, list_id)
-        return f"Saved recipe {recipe_id} to list {list_id}"
+        list_name = RecipeListModel.query.filter_by(id=list_id).first().name
+        flash("Recipe saved successfully to " + list_name + "!") # going to be shown in the flask template
+        return redirect(url_for("recipe", recipe_id=recipe_id))
 
     @staticmethod
     def get_lists(session):
