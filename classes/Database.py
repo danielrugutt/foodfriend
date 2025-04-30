@@ -10,6 +10,7 @@ from classes.Recipe import RecipeBuilder
 from classes.DietaryPreference import DietaryPreference
 from models.DietaryPreferenceModel import DietaryPreferenceModel
 from db import db
+import json
 import os
 
 class Singleton(type):
@@ -50,10 +51,28 @@ class Database(metaclass=Singleton):
 
     def insert_recipe(self, recipe_object):
         """ Given a recipe object, inserts into the database """
-        recipe_model = self.recipe_to_recipe_model(recipe_object)
-
         with self.app.app_context():
+            recipe_model = self.recipe_to_recipe_model(recipe_object)
             db.session.add(recipe_model)
+
+            # add ingredients, creating as needed
+            for ingredient in recipe_object.ingredients:
+                found_ingredient = self.get_ingredient(ingredient.name)
+
+                if found_ingredient is None:
+                    found_ingredient = IngredientModel(name=ingredient.name.lower())
+                    db.session.add(found_ingredient)
+
+                recipe_ingredient_model = RecipeIngredientModel(
+                    quantity=ingredient.quantity,
+                    unit=ingredient.unit,
+                    recipe=recipe_model,
+                    ingredient=found_ingredient
+                )
+
+                db.session.add(recipe_ingredient_model)
+                recipe_model.ingredients.append(recipe_ingredient_model)
+
             db.session.commit()
 
         return recipe_object.ID
@@ -105,23 +124,14 @@ class Database(metaclass=Singleton):
             return None
 
     def get_ingredient(self, name, type="OTHER"):
-        """ Checks to see if an ingredient exists - if not, makes it. """
+        """ Checks to see if an ingredient exists, returning it if so. """
         name = name.lower()
-        with self.app.app_context():
-            existing_ingredient = db.session.query(IngredientModel).filter_by(name=name).first()
-
-            if not existing_ingredient:
-                ingredient_model = IngredientModel(name=name, type=type)
-                db.session.add(ingredient_model)
-                db.session.commit()
-                return ingredient_model
-
+        existing_ingredient = db.session.query(IngredientModel).filter_by(name=name).first()
         return existing_ingredient
 
 
     def recipe_to_recipe_model(self, recipe_object):
-        """ Converts an object into a model. Will make ingredients as needed. """
-        from models import IngredientModel
+        """ Converts an object into a model. """
 
         recipe_model = RecipeModel(
             title=recipe_object.title,
@@ -130,23 +140,12 @@ class Database(metaclass=Singleton):
             cuisine=recipe_object.cuisine,
             steps=recipe_object.steps,
             diet=recipe_object.diet,
-            intolerances=recipe_object.intolerances
+            intolerances=recipe_object.intolerances,
+            img_url=recipe_object.img_url
         )
 
         if recipe_object.ID:
             recipe_model.id = recipe_object.ID
-
-
-        for ingredient in recipe_object.ingredients:
-            found_ingredient = self.get_ingredient(ingredient.name)
-
-            recipe_ingredient_model = RecipeIngredientModel(
-                quantity=ingredient.quantity,
-                unit=ingredient.unit,
-                recipe=recipe_model,                    
-                ingredient=found_ingredient
-            )
-            recipe_model.ingredients.append(recipe_ingredient_model)
 
         return recipe_model
 
@@ -178,7 +177,7 @@ class Database(metaclass=Singleton):
             .set_diet(recipe_model.get_diet())
             .set_intolerances(recipe_model.get_intolerances())
             .set_ID(recipe_model.id)
-            # .set_img_url(recipe_model)
+            .set_img_url(recipe_model.img_url)
             .build()
         )
 

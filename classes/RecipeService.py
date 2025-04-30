@@ -31,7 +31,7 @@ class RecipeService:
         recipe = RecipeService.get_recipe_from_database(recipe_id)
 
         if recipe is None:
-            return "Recipe not found", 404
+            return "Recipe not found. (Van, comment out line 24 & 25 in RecipeService to get the error message/information back)", 404
 
         uid = session.get("uid")
         user_lists = []

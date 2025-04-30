@@ -212,6 +212,29 @@ def add_meal():
 @app.route('/planned-meals')
 @auth_required
 def get_planned_meals():
+    user = get_current_user()
+    if not user:
+        return jsonify([])
+
+    meals = PlannedMeal.query.filter_by(user_id=user.id).all()
+
+    events = []
+    for meal in meals:
+        start_dt = meal.datetime
+        end_dt = start_dt + timedelta(hours=1)
+
+        events.append({
+            "title": f"{meal.title} ({meal.recipe.title})",
+            "start": start_dt.isoformat(),
+            "end": end_dt.isoformat(),
+            "extendedProps": {
+                "recipe_id": meal.recipe.id,
+                "notes": meal.notes or ""
+            }
+        })
+
+    return jsonify(events)
+
     return CalendarService.get_planned_meals()
 
 @app.route('/all-recipes')
