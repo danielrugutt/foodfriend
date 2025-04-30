@@ -1,3 +1,4 @@
+from abc import ABC, ABCMeta, abstractmethod
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from models.RecipeModel import RecipeModel
@@ -13,8 +14,8 @@ from db import db
 import json
 import os
 
-class Singleton(type):
-    """ A metaclass for making Database a singleton"""
+class Singleton(ABCMeta):
+    """ A metaclass for making Database a singleton. Inherits from ABCMeta so we can apply both the ABC and Singleton metaclass to the same object """
     _instances = {}
 
     def __call__(database_class, *args, **kwargs):
@@ -22,8 +23,57 @@ class Singleton(type):
             database_class._instances[database_class] = super(Singleton, database_class).__call__(*args, **kwargs)
         return database_class._instances[database_class]
 
+class DatabaseInterface(ABC, metaclass=Singleton):
+    @abstractmethod
+    def initialize_database(self):
+        pass
 
-class Database(metaclass=Singleton):
+    @abstractmethod
+    def insert_recipe(self, recipe_object):
+        pass
+
+    @abstractmethod
+    def get_user_preferences(self, uid):
+        pass
+
+    @abstractmethod
+    def get_recipe(self, recipe_id):
+        pass
+
+    @abstractmethod
+    def get_user(self, user_id):
+        pass
+
+    @abstractmethod
+    def set_user_preferences(self, uid, dietary_preference):
+        pass
+
+    @abstractmethod
+    def get_ingredient(self, name, type):
+        pass
+
+    @abstractmethod
+    def check_and_create_user(self, uid, email):
+        pass
+
+    @abstractmethod
+    def get_default_list(self, uid):
+        pass
+
+    @abstractmethod
+    def add_recipe_to_list(self, uid, recipe_id, list_id):
+        pass
+
+    @abstractmethod
+    def create_named_list(self, uid, list_name):
+        pass
+
+    @abstractmethod
+    def insert_planned_meal(self, planned_meal):
+        pass
+
+
+class Database(DatabaseInterface):
     def __init__(self, app):
         self.app = app
         base_dir = os.path.abspath(os.path.dirname(__file__))
@@ -52,6 +102,12 @@ class Database(metaclass=Singleton):
     def insert_recipe(self, recipe_object):
         """ Given a recipe object, inserts into the database """
         with self.app.app_context():
+
+            # checking if recipe exists first!
+            existing_recipe = db.session.get(RecipeModel, recipe_object.ID)
+            if existing_recipe:
+                return existing_recipe.id
+
             recipe_model = self.recipe_to_recipe_model(recipe_object)
             db.session.add(recipe_model)
 
@@ -252,7 +308,6 @@ class Database(metaclass=Singleton):
             db.session.commit()
 
         return planned_meal
-
 
 
 
