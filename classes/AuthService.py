@@ -89,6 +89,12 @@ class AuthService:
             return response
         except Exception as e:
             return jsonify({"error": str(e)}), 500
+
+    @staticmethod
+    def change_email(session):
+        uid = session.get("uid")
+        new_user_email = request.form.get("emailChangeInput")
+        return
         
 # Exposing auth_required as a global function for use in other modules
 auth_required = AuthService.auth_required
