@@ -19,6 +19,7 @@ from models.RecipeModel import RecipeModel
 from models.RecipeListModel import RecipeListModel
 from classes.RecipeService import RecipeService
 from classes.SearchService import SearchService
+from classes.CalendarService import CalendarService
 from classes.AuthService import AuthService, auth_required
 import secrets
 import os
@@ -35,7 +36,7 @@ app.secret_key = os.getenv('SECRET_KEY')
 AuthService.init(app)
 RecipeService.init(app)
 SearchService.init(app)
-
+CalendarService.init(app)
 
 # Configure session cookie settings
 app.config['SESSION_COOKIE_SECURE'] = True  # Ensure cookies are sent over HTTPS
@@ -155,103 +156,18 @@ def dashboard():
 @app.route('/add-meal', methods=["POST"])
 @auth_required
 def add_meal():
-    data = request.get_json()
-
-    title = data.get("title")
-    start_time = data.get("startTime")  # e.g., "14:00"
-    notes = data.get("notes")
-    recipe_id = data.get("recipe_id")
-    start_date = data.get("start")      # e.g., "2025-04-29"
-
-    if not all([title, start_time, start_date]):
-        return jsonify({"error": "Missing required fields"}), 400
-
-    try:
-        combined_datetime = datetime.strptime(f"{start_date} {start_time}", "%Y-%m-%d %H:%M")
-    except ValueError:
-        return jsonify({"error": "Invalid date or time format"}), 400
-
-    user_id = session.get("uid")
-    if not user_id:
-        return jsonify({"error": "User not logged in"}), 401
-
-    user = db.session.get(UserModel, user_id)
-    if not user:
-        return jsonify({"error": "User not found"}), 404
-
-    recipe = db.session.get(RecipeModel, recipe_id) if recipe_id else None
-
-    # Optional: check recipe is in user's recipe lists (if needed)
-    if recipe:
-        user_recipe_ids = {
-            entry.recipe.id
-            for rl in user.recipe_lists
-            for entry in rl.recipes
-        }
-        if recipe.id not in user_recipe_ids:
-            return jsonify({"error": "Recipe not in user's lists"}), 400
-
-    new_meal = PlannedMeal(
-        title=title,
-        datetime=combined_datetime,
-        notes=notes,
-        user=user,
-        recipe=recipe if recipe else None
-    )
-
-    db.session.add(new_meal)
-    db.session.commit()
-
-    return jsonify({"message": "Meal added successfully"}), 200
-
+    return CalendarService.add_meal(session)
 
 @app.route('/planned-meals')
 @auth_required
 def get_planned_meals():
-    user = get_current_user()
-    if not user:
-        return jsonify([])
-
-    meals = PlannedMeal.query.filter_by(user_id=user.id).all()
-
-    events = []
-    for meal in meals:
-        start_dt = meal.datetime
-        end_dt = start_dt + timedelta(hours=1)
-
-        events.append({
-            "title": f"{meal.title} ({meal.recipe.title})",
-            "start": start_dt.isoformat(),
-            "end": end_dt.isoformat(),
-            "extendedProps": {
-                "recipe_id": meal.recipe.id,
-                "notes": meal.notes or ""
-            }
-        })
-
-    return jsonify(events)
+    return CalendarService.get_planned_meals()
 
 
 @app.route('/all-recipes')
 @auth_required
 def get_all_recipes():
-    test_user_id = session.get("uid")
-    if not test_user_id:
-        return redirect('/login')
-
-    # Fetch all recipe lists for the user
-    recipe_lists = RecipeListModel.query.filter_by(user_id=test_user_id).all()
-
-    grouped_recipes = []
-    for recipe_list in recipe_lists:
-        # Get recipes for each list
-        recipes = recipe_list.recipe_objects()
-        grouped_recipes.append({
-            'list_name': recipe_list.name,
-            'recipes': [{'id': recipe.id, 'name': recipe.title} for recipe in recipes]
-        })
-
-    return jsonify(grouped_recipes)
+    return CalendarService.get_all_recipes()
 
 @app.route('/recipe/<int:recipe_id>/bookmark/', methods=["POST"])
 @auth_required

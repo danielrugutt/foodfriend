@@ -1,7 +1,24 @@
 import unittest
-import
+import ../RecipeService
+import ../Database
 
 class TestRecipeExport(unittest.TestCase):
+
+    def test_invalid_recipe(self):
+        """ Testing case 1 - recipe is invalid """
+        response, code = RecipeService.export_recipe(999999, "email")
+        self.assertEqual(response, "Recipe not found")
+
+    def test_no_ingredients(self):
+        RecipeBuilder
+        response, code =
+
+    def test_no_steps(self):
+
+    def test_no_ingredients_or_steps(self):
+
+    def test_normal_recipe(self):
+
 
     # def test_upper(self):
     #     self.assertEqual('foo'.upper(), 'FOO')

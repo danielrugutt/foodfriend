@@ -5,6 +5,7 @@ from models.IngredientModel import IngredientModel
 from models.RecipeIngredientModel import RecipeIngredientModel
 from models.RecipeListModel import RecipeListModel, RecipeListRecipeModel
 from models.UserModel import UserModel
+from models.PlannedMeal import PlannedMeal
 from classes.Recipe import RecipeBuilder
 from classes.DietaryPreference import DietaryPreference
 from models.DietaryPreferenceModel import DietaryPreferenceModel
@@ -107,6 +108,11 @@ class Database(metaclass=Singleton):
 
             db.session.add(dietary_preference_model)
             db.session.commit()
+
+    def get_user(self, user_id):
+        """ Gets a user model from the database """
+        user = UserModel.query.get(user_id)
+        return user
 
     def get_recipe(self, recipe_id):
         """ Grabs a recipe model from the database and converts it to a recipe object """
@@ -237,6 +243,15 @@ class Database(metaclass=Singleton):
             db.session.add(new_list)
             db.session.commit()
             return new_list.id
+        
+    def insert_planned_meal(self, planned_meal):
+        """ Inserts a planned meal into the database """
+        with self.app.app_context():
+            merged_meal = db.session.merge(planned_meal)
+            db.session.add(merged_meal)
+            db.session.commit()
+
+        return planned_meal
 
 
 
