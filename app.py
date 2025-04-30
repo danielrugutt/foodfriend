@@ -1,8 +1,7 @@
-from flask import Flask, redirect, render_template, request, make_response, session, abort, jsonify, url_for
+from flask import Flask, redirect, render_template, request, session, abort, jsonify, url_for
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
-from functools import wraps
-from firebase_admin import credentials, firestore, auth
+from firebase_admin import credentials, firestore
 from datetime import datetime,timedelta, time
 from dotenv import load_dotenv
 from typing import List
@@ -26,6 +25,7 @@ import os
 import sys
 import firebase_admin
 import json
+from auth_service import authorize, auth_required, delete_account, logout, init_auth_service, delete_account
 
 load_dotenv()
 
@@ -50,6 +50,7 @@ cred = credentials.Certificate("firebase-auth.json")
 firebase_admin.initialize_app(cred)
 firestore_db = firestore.client()
 database = Database(app)
+init_auth_service(database)
 db = database.initialize_database()
 
 #test user only
@@ -80,55 +81,9 @@ def get_current_user():
     return UserModel.query.filter_by(id=uid).first()
 
 """ AUTHENTICATION ROUTES """
-# Add this to any request needing authentication
-def auth_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user' not in session:
-            return redirect(url_for('login'))
-        
-        else:
-            return f(*args, **kwargs)
-        
-    return decorated_function
-
-def get_bearer_token(auth_header):
-    if not auth_header or not auth_header.startswith('Bearer '):
-        return None
-    return auth_header.split(' ')[1]
-
 @app.route('/auth', methods=['POST'])
-def authorize():
-    token = get_bearer_token(request.headers.get('Authorization'))
-    if not token:
-        return jsonify({'error': 'Authorization header missing or invalid'}), 401
-
-    try:
-        # Validate the token
-        decoded_token = auth.verify_id_token(token, check_revoked=True, clock_skew_seconds=60)
-        uid = decoded_token['uid']
-        email = decoded_token.get('email')
-
-        # Add user to session
-        session['user'] = {'uid': uid, 'email': email}
-        session['uid'] = uid
-
-        # Ensure user exists in the local database
-        try:
-            print(f"Creating/checking user with UID: {uid}, email: {email}")
-            database.check_and_create_user(uid, email)
-        except Exception as e:
-            print(f"Error interacting with the database: {e}", file=sys.stderr)
-            import traceback
-            traceback.print_exc()  # Add this to see the full traceback in logs
-            return jsonify({'error': 'Internal server error'}), 500
-
-        # Return success response
-        return jsonify({'message': 'User authenticated successfully'}), 200
-
-    except Exception as e:
-        print(f"Error verifying token: {e}", file=sys.stderr)
-        return jsonify({'error': 'Unauthorized'}), 401
+def auth_route():
+    return authorize()
 
 
 """ GUEST ROUTES """
@@ -187,11 +142,8 @@ def reset_password():
         return render_template('forgot_password.html')
 
 @app.route('/logout')
-def logout():
-    session.pop('user', None)  # Remove the user from session
-    response = make_response(redirect(url_for('login')))
-    response.set_cookie('session', '', expires=0)  # Optionally clear the session cookie
-    return response
+def logout_route():
+    return logout()
 
 @app.route('/calendar')
 def calendar():
@@ -244,16 +196,8 @@ def change_email():
 
 @app.route('/delete-account', methods=['POST'])
 @auth_required
-def delete_account():
-    uid = session.get("uid")
-    try:
-        # Delete the user using Firebase Admin SDK
-        auth.delete_user(uid)
-        session.pop('user', None)  # Remove user from session
-        response = make_response(redirect(url_for('login')))
-        return response
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+def delete_account_route():
+    return delete_account()
 
 if __name__ == '__main__':
     app.run(debug=True)
