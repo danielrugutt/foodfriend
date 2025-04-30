@@ -21,8 +21,6 @@ class RecipeService:
         if recipe is None:
             spoon = SpoonacularConnection()
             recipe = spoon.getRecipe(recipe_id)
-            if recipe is None:
-                return None
             RecipeService.database.insert_recipe(recipe)
 
         return recipe
