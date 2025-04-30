@@ -40,7 +40,7 @@ class AuthService:
             # Ensure user exists in the local database
             try:
                 print(f"Creating/checking user with UID: {uid}, email: {email}")
-                AuthService.database.check_and_create_user(uid, email)
+                AuthService.database.check_and_create_user(uid, email) # type: ignore
             except Exception as e:
                 print(f"Error interacting with the database: {e}", file=sys.stderr)
                 return jsonify({'error': 'Internal server error'}), 500
