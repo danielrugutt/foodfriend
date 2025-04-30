@@ -1,31 +1,14 @@
 from flask import Flask, redirect, render_template, request, session, abort, jsonify, url_for
 from flask_cors import CORS
-from flask_sqlalchemy import SQLAlchemy
-from firebase_admin import credentials, firestore
 from datetime import datetime,timedelta, time
 from dotenv import load_dotenv
-from typing import List
-from classes.DietaryPreference import DietaryPreference
-from classes.SpoonacularConnection import SpoonacularConnection
-from classes.SpoonacularRecipeAdapter import SpoonacularRecipeAdapter
 from classes.Recipe import *
 from classes.Database import Database
-from models.UserModel import UserModel
-from models.DietaryPreferenceModel import DietaryPreferenceModel
-from models.IngredientModel import IngredientModel
-from models.PlannedMeal import PlannedMeal
-from models.RecipeIngredientModel import RecipeIngredientModel
-from models.RecipeModel import RecipeModel
-from models.RecipeListModel import RecipeListModel
 from classes.RecipeService import RecipeService
 from classes.SearchService import SearchService
 from classes.CalendarService import CalendarService
 from classes.AuthService import AuthService, auth_required
-import secrets
 import os
-import sys
-import firebase_admin
-import json
 
 load_dotenv()
 
@@ -46,14 +29,10 @@ app.config['SESSION_REFRESH_EACH_REQUEST'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Can be 'Strict', 'Lax', or 'None'
 CORS(app, supports_credentials=True) # Secure cross origin requests support
 
-
 database = Database(app)
 db = database.initialize_database()
 
-#test user only
-test_user=DietaryPreference(["greek"],["paprika"],["200"],["Peanut"],["vegetarian"] )
-
-
+# test recipe
 taratorRecipe = (
     RecipeBuilder("Tarator")
     .set_ingredients([RecipeIngredient("Cucumber", 1,), RecipeIngredient("Walnut", 0.25, "cup"), RecipeIngredient("Yogurt", 0.5, "tub")])
@@ -66,10 +45,8 @@ taratorRecipe = (
     .set_intolerances(["Dairy"])
     .build()
 )
-
 database.insert_recipe(taratorRecipe)
 
-##### TESTING SECTION ENDS HERE #####
 
 def get_current_user():
     uid = session.get("uid")
@@ -163,7 +140,6 @@ def add_meal():
 def get_planned_meals():
     return CalendarService.get_planned_meals()
 
-
 @app.route('/all-recipes')
 @auth_required
 def get_all_recipes():
@@ -187,9 +163,7 @@ def profile():
 @app.route('/profile/email-change', methods=["POST"])
 @auth_required
 def change_email():
-    uid = session.get("uid")
-    new_user_email = request.form.get("emailChangeInput")
-    return
+    return AuthService.change_email(session)
 
 @app.route('/delete-account', methods=['POST'])
 @auth_required

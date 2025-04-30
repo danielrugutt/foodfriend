@@ -33,7 +33,9 @@ confirmPasswordButton.addEventListener('click', async () => {
         // Update the user's email
         await updateEmail(user, newEmail);
         console.log("Email updated successfully to:", newEmail);
+        alert("Email changed to " + newEmail + "!");
 
+        // NOT NEEDED with how firebase is set up right now, if email enumeration is changed this will need to come back
         // Send a verification email to the new address
         // await sendEmailVerification(user);
         // alert("An email has been sent to you informing you of this change. You may click the verification link within it if you wish, but your email has already been changed!");
