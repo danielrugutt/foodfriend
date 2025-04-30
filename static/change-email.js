@@ -35,8 +35,8 @@ confirmPasswordButton.addEventListener('click', async () => {
         console.log("Email updated successfully to:", newEmail);
 
         // Send a verification email to the new address
-        await sendEmailVerification(user);
-        alert("An email has been sent to you informing you of this change. You may click the verification link within it if you wish, but your email has already been changed!");
+        // await sendEmailVerification(user);
+        // alert("An email has been sent to you informing you of this change. You may click the verification link within it if you wish, but your email has already been changed!");
 
         // passwordPopup.style.display = 'none';
         passwordPopup.value = '';
