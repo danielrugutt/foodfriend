@@ -281,33 +281,6 @@ def get_planned_meals():
 
     return jsonify(events)
 
-@app.route('/user-recipe-lists')
-@auth_required
-def get_user_recipe_lists():
-    user_id = session.get("uid")
-    if not user_id:
-        return redirect('/login')
-
-    # Get all recipe lists for the user
-    recipe_lists = RecipeListModel.query.filter_by(user_id=user_id).all()
-
-    # Format data: group recipes by recipe list
-    response = []
-    for recipe_list in recipe_lists:
-        response.append({
-            'list_id': recipe_list.id,
-            'list_name': recipe_list.name,
-            'recipes': [
-                {
-                    'id': recipe.id,
-                    'name': recipe.title,
-                    # Add other fields if needed
-                }
-                for recipe in recipe_list.recipe_objects()
-            ]
-        })
-
-    return jsonify(response)
 
 @app.route('/all-recipes')
 @auth_required
