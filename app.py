@@ -19,18 +19,20 @@ from models.RecipeModel import RecipeModel
 from models.RecipeListModel import RecipeListModel
 from classes.RecipeService import RecipeService
 from classes.SearchService import SearchService
+from classes.AuthService import AuthService, auth_required
 import secrets
 import os
 import sys
 import firebase_admin
 import json
-from auth_service import authorize, auth_required, delete_account, logout, init_auth_service, delete_account
 
 load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
 
+# Firebase Admin SDK initialization in AuthService
+AuthService.init(app)
 RecipeService.init(app)
 SearchService.init(app)
 
@@ -43,12 +45,8 @@ app.config['SESSION_REFRESH_EACH_REQUEST'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Can be 'Strict', 'Lax', or 'None'
 CORS(app, supports_credentials=True) # Secure cross origin requests support
 
-# Firebase Admin SDK setup
-cred = credentials.Certificate("firebase-auth.json")
-firebase_admin.initialize_app(cred)
-firestore_db = firestore.client()
+
 database = Database(app)
-init_auth_service(database)
 db = database.initialize_database()
 
 #test user only
@@ -81,7 +79,7 @@ def get_current_user():
 """ AUTHENTICATION ROUTES """
 @app.route('/auth', methods=['POST'])
 def auth_route():
-    return authorize()
+    return AuthService.authorize()
 
 
 """ GUEST ROUTES """
@@ -141,7 +139,7 @@ def reset_password():
 
 @app.route('/logout')
 def logout_route():
-    return logout()
+    return AuthService.logout()
 
 @app.route('/calendar')
 def calendar():
@@ -280,7 +278,7 @@ def change_email():
 @app.route('/delete-account', methods=['POST'])
 @auth_required
 def delete_account_route():
-    return delete_account()
+    return AuthService.delete_account()
 
 if __name__ == '__main__':
     app.run(debug=True)
