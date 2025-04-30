@@ -1,131 +1,192 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset='utf-8' />
-    <title>Food Friend Calendar</title>
-    <!-- FullCalendar CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet" />
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Meal Planner Calendar</title>
+  <!-- FullCalendar CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet" />
+  <!-- FullCalendar Core -->
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+
+  <style>
+    /* Simple modal styling */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      background-color: rgba(0,0,0,0.6);
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background-color: #fff;
+      padding: 20px 24px;
+      border-radius: 12px;
+      width: 300px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      position: relative;
+    }
+
+    .close {
+      position: absolute;
+      right: 12px;
+      top: 10px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    #mealForm input, #mealForm textarea, #mealForm select {
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 8px 6px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    #mealForm button {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      background-color: #3b82f6;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    #calendar {
+      max-width: 900px;
+      margin: 40px auto;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="calendar"></div>
+
+  <!-- Modal for adding meal -->
+  <div id="mealModal" class="modal">
+    <div class="modal-content">
+      <span class="close" id="modalClose">&times;</span>
+      <h3>Plan a Meal</h3>
+      <form id="mealForm">
+        <label for="mealTitle">Title:</label>
+        <input type="text" id="mealTitle" required>
+
+        <label for="startTime">Start Time:</label>
+        <input type="text" id="startTime" required>
 
 
-    <!-- FullCalendar JS (global build) -->
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+        <label for="recipeSelect">Choose a Recipe:</label>
+        <select id="recipeSelect" required>
+          <option value="">-- Select a recipe --</option>
+          <!-- Recipes will be dynamically added here -->
+        </select>
 
 
+        <label for="mealNotes">Notes:</label>
+        <textarea id="mealNotes" rows="4"></textarea>
 
+        <button type="submit">Add Meal</button>
+      </form>
+    </div>
+  </div>
 
+  <script>
+    let selectedDate = null;
+    let calendar;
 
+    document.addEventListener('DOMContentLoaded', function() {
+      const calendarEl = document.getElementById('calendar');
 
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        margin: 40px;
-        padding: 0;
-      }
-      #calendar {
-        max-width: 1100px;
-        margin: 0 auto;
-      }
-    </style>
-  </head>
-  <body>
-    <h1>Meal Planner Calendar</h1>
-    <div id="calendar"></div>
+      calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        dateClick: function(info) {
+          selectedDate = info.dateStr;
+          document.getElementById('mealTitle').value = '';
+          document.getElementById('startTime').value = '';
+          document.getElementById('mealNotes').value = '';
+          document.getElementById('recipeSelect').selectedIndex = 0;
+          document.getElementById('mealModal').style.display = 'flex';
+        },
+        events: '/planned-meals'
+      });
 
+      calendar.render();
+      loadAllRecipes(); // Fetch and populate recipe list dropdown
+    });
 
-    <script>
+    async function loadAllRecipes() {
+    try {
+      const response = await fetch('/all-recipes');
+      const data = await response.json();
+      const recipeSelect = document.getElementById('recipeSelect');
 
+      // Clear previous options
+      recipeSelect.innerHTML = '<option value="">-- Select a recipe --</option>';
 
-    document.addEventListener('DOMContentLoaded', function () {
-        var calendarEl = document.getElementById('calendar');
-        var bookmarkedRecipes = [];
+      // Loop through the grouped recipes and create optgroups
+      data.forEach(list => {
+        const optgroup = document.createElement('optgroup');
+        optgroup.label = list.list_name; // Set the label as the list name
 
-
-        fetch('/api/bookmarked-recipes')
-          .then(response => response.json())
-          .then(data => {
-            if (!Array.isArray(data)) {
-              console.error("Unexpected data format from /api/bookmarked-recipes:", data);
-              return;
-            }
-
-            bookmarkedRecipes = data; // 🔥 This stores your fetched recipes for later use
-            // Continue safely here
-            const recipeOptions = data.map(recipe => `<option value="${recipe.id}">${recipe.name}</option>`).join('');
-            console.log("Bookmarked recipes:", recipeOptions);
-            // Use these in your UI as needed
-          })
-          .catch(err => console.error("Fetch failed:", err));
-
-
-
-
-        var calendar = new FullCalendar.Calendar(calendarEl, {
-          initialView: 'dayGridMonth',
-          events: '/api/planned-meals',
-          editable: true,
-          selectable: true,
-          headerToolbar: {
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay'
-          },
-          dateClick: function (info) {
-            const mealName = prompt("Enter a custom meal title:");
-            const notes = prompt("Any notes for this meal?");
-            if (!mealName) return;
-
-
-            const recipeOptions = bookmarkedRecipes.map(r => `${r.id}: ${r.name}`).join('\n');
-            const recipeId = prompt(`Choose a recipe ID:\n${recipeOptions}`);
-            const selectedRecipe = bookmarkedRecipes.find(r => r.id == recipeId);
-            if (!selectedRecipe) return alert("Invalid recipe selected!");
-
-
-            const time = prompt('Start time (HH:MM, 24hr format):');
-            if (!time) return;
-
-
-            const startDateTime = info.dateStr + 'T' + time + ':00';
-            const endHour = (parseInt(time.split(':')[0]) + 1).toString().padStart(2, '0');
-            const endDateTime = info.dateStr + 'T' + endHour + ':' + time.split(':')[1] + ':00';
-
-
-            fetch('/api/add-meal', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                title: mealName,
-                recipe_id: parseInt(recipeId),
-                start: startDateTime,
-                notes: notes
-              })
-            })
-            .then(res => res.json())
-            .then(events => {
-              calendar.removeAllEvents();
-              events.forEach(event => {
-                calendar.addEvent(event);
-              });
-
-
-
-
-            });
-          }
+        // Add recipes under this optgroup
+        list.recipes.forEach(recipe => {
+          const option = document.createElement('option');
+          option.value = recipe.id;
+          option.textContent = recipe.name;
+          optgroup.appendChild(option);
         });
 
-        fetch('/api/planned-meals')
-          .then(response => response.json())
-          .then(events => {
-            events.forEach(event => calendar.addEvent(event));
-          })
-          .catch(err => console.error("Failed to load planned meals:", err));
-
-
-
-        calendar.render();
+        // Append optgroup to select element
+        recipeSelect.appendChild(optgroup);
       });
-   
-    </script>
-  </body>
+    } catch (err) {
+      console.error("Failed to load recipes", err);
+    }
+  }
+
+    // Modal logic
+    const modal = document.getElementById('mealModal');
+    const closeBtn = document.getElementById('modalClose');
+    const form = document.getElementById('mealForm');
+
+    closeBtn.onclick = () => modal.style.display = 'none';
+    window.onclick = (e) => {
+      if (e.target == modal) modal.style.display = 'none';
+    };
+
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const title = document.getElementById('mealTitle').value.trim();
+      const startTime = document.getElementById('startTime').value.trim();
+      const notes = document.getElementById('mealNotes').value.trim();
+      const recipeId = parseInt(document.getElementById('recipeSelect').value);
+
+      fetch('/add-meal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: title,
+          startTime: startTime,
+          notes: notes,
+          recipe_id: recipeId,
+          start: selectedDate
+        })
+      }).then(response => {
+        if (response.ok) {
+          modal.style.display = 'none';
+          calendar.refetchEvents();
+        } else {
+          alert("Failed to add meal.");
+        }
+      });
+    });
+  </script>
+
+</body>
 </html>

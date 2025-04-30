@@ -2,9 +2,8 @@ from datetime import date
 import time
 
 class PlannedMeal:
-    def __init__(self, day, time, title, recipe, notes = None):
-        self.day = day
-        self.time = time
+    def __init__(self, datetime, title, recipe, notes = None):
+        self.datetime = datetime
         self.title = title
         self.notes = notes
         self.recipe = recipe

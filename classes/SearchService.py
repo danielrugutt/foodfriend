@@ -42,16 +42,16 @@ class SearchService:
 
     @staticmethod
     def settings(user, request_method):
+        if request_method=='POST':
+            data=request.get_json()
+            user_preferences=DietaryPreference(data['excludedCuisines'],data['excludedIngredients'],data['maxSugar'],data['intolerances'],data['diets'])
+            SearchService.database.set_user_preferences(user, user_preferences)
+
         user_preferences=SearchService.database.get_user_preferences(user)
 
         shown_prefs = { "excludedCuisines": user_preferences.exclude_cuisine,
-                            "excludedIngredients": user_preferences.exclude_ingredients,
-                            "maxSugar": user_preferences.max_sugar,
-                            "intolerances": user_preferences.intolerances,
-                            "diets": user_preferences.diets}
-        if request_method=='POST':
-            data=request.get_json()
-            new_pref=DietaryPreference(data['excludedCuisines'],data['excludedIngredients'],data['maxSugar'],data['intolerances'],data['diets'])
-            SearchService.database.set_user_preferences(user, new_pref)
-
+                    "excludedIngredients": user_preferences.exclude_ingredients,
+                    "maxSugar": user_preferences.max_sugar,
+                    "intolerances": user_preferences.intolerances,
+                    "diets": user_preferences.diets}
         return render_template("settings.html",preferences=shown_prefs)

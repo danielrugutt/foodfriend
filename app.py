@@ -16,6 +16,7 @@ from models.IngredientModel import IngredientModel
 from models.PlannedMeal import PlannedMeal
 from models.RecipeIngredientModel import RecipeIngredientModel
 from models.RecipeModel import RecipeModel
+from models.RecipeListModel import RecipeListModel
 from classes.RecipeService import RecipeService
 from classes.SearchService import SearchService
 import secrets
@@ -50,8 +51,6 @@ database = Database(app)
 init_auth_service(database)
 db = database.initialize_database()
 
-
-##### ALL TESTING STUFF, TO BE REMOVED AT A LATER DATE ######
 #test user only
 test_user=DietaryPreference(["greek"],["paprika"],["200"],["Peanut"],["vegetarian"] )
 
@@ -70,43 +69,6 @@ taratorRecipe = (
 )
 
 database.insert_recipe(taratorRecipe)
-
-@app.route('/test-setup')
-def test_setup():
-    # 1. Create sample user
-    test_uid = "test-user-123"
-    user = UserModel.query.filter_by(id=test_uid).first()
-    if not user:
-        user = UserModel(id=test_uid, name="Noah", email="test@example.com")
-        db.session.add(user)
-    
-    # 2. Create sample recipe
-    recipe = RecipeModel.query.filter_by(title="Test Pasta").first()
-    if not recipe:
-        recipe = RecipeModel(title="Test Pasta", cooking_time=20, servings=4, cuisine="Italian")
-        db.session.add(recipe)
-
-    # 3. Bookmark the recipe
-    if recipe not in user.bookmarked_recipes:
-        user.bookmarked_recipes.append(recipe)
-
-    # 4. Add a planned meal
-    planned_meal = PlannedMeal(
-        user=user,
-        recipe=recipe,
-        title="Lunch: Test Pasta",
-        datetime=datetime.now(),
-        notes="Just testing calendar"
-    )
-    db.session.add(planned_meal)
-
-    db.session.commit()
-
-    # Simulate login
-    session['uid'] = test_uid
-    session['user'] = { "uid": test_uid, "email": "test@example.com" }
-
-    return "Test data created and session set!"
 
 ##### TESTING SECTION ENDS HERE #####
 
@@ -186,50 +148,71 @@ def calendar():
     return render_template('calendar.html')
 
 
-@app.route('/api/add-meal', methods=['POST'])
-def add_meal():
-    data = request.json
-    title = data['title']
-    recipe_id = data['recipe_id']
-    start = data['start']  # ISO 8601 string: "2025-04-14T12:00:00"
-
-
-    day = datetime.strptime(start.split('T')[0], "%Y-%m-%d").date()
-    time_str = start.split('T')[1][:5]
-    time_obj = datetime.strptime(time_str, "%H:%M").time()
-
-
-    user = get_current_user()  # However you're managing sessions
-    recipe = db.session.get(RecipeModel, recipe_id)
-    if not recipe or recipe not in user.bookmarked_recipes:
-        return jsonify({"error": "Invalid recipe"}), 400
-
-    new_meal = PlannedMeal(
-        user_id=user.id,
-        recipe_id=recipe_id,
-        title=title,
-        day=day,
-        time=time_obj
-    )
-    db.session.add(new_meal)
-    db.session.commit()
-
-
-    return jsonify({"message": "Meal added"}), 201
-
-
 """ LOGGED IN USER ROUTES """
 @app.route('/dashboard')
 @auth_required
 def dashboard():
     return render_template('dashboard.html')
 
-@app.route('/api/planned-meals')
+@app.route('/add-meal', methods=["POST"])
+@auth_required
+def add_meal():
+    data = request.get_json()
+
+    title = data.get("title")
+    start_time = data.get("startTime")  # e.g., "14:00"
+    notes = data.get("notes")
+    recipe_id = data.get("recipe_id")
+    start_date = data.get("start")      # e.g., "2025-04-29"
+
+    if not all([title, start_time, start_date]):
+        return jsonify({"error": "Missing required fields"}), 400
+
+    try:
+        combined_datetime = datetime.strptime(f"{start_date} {start_time}", "%Y-%m-%d %H:%M")
+    except ValueError:
+        return jsonify({"error": "Invalid date or time format"}), 400
+
+    user_id = session.get("uid")
+    if not user_id:
+        return jsonify({"error": "User not logged in"}), 401
+
+    user = db.session.get(UserModel, user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    recipe = db.session.get(RecipeModel, recipe_id) if recipe_id else None
+
+    # Optional: check recipe is in user's recipe lists (if needed)
+    if recipe:
+        user_recipe_ids = {
+            entry.recipe.id
+            for rl in user.recipe_lists
+            for entry in rl.recipes
+        }
+        if recipe.id not in user_recipe_ids:
+            return jsonify({"error": "Recipe not in user's lists"}), 400
+
+    new_meal = PlannedMeal(
+        title=title,
+        datetime=combined_datetime,
+        notes=notes,
+        user=user,
+        recipe=recipe if recipe else None
+    )
+
+    db.session.add(new_meal)
+    db.session.commit()
+
+    return jsonify({"message": "Meal added successfully"}), 200
+
+
+@app.route('/planned-meals')
 @auth_required
 def get_planned_meals():
     user = get_current_user()
     if not user:
-        return jsonify({"error": "User not authenticated"}), 401
+        return jsonify([])
 
     meals = PlannedMeal.query.filter_by(user_id=user.id).all()
 
@@ -239,7 +222,7 @@ def get_planned_meals():
         end_dt = start_dt + timedelta(hours=1)
 
         events.append({
-            "title": f"{meal.title} ({meal.recipe.name})",
+            "title": f"{meal.title} ({meal.recipe.title})",
             "start": start_dt.isoformat(),
             "end": end_dt.isoformat(),
             "extendedProps": {
@@ -250,7 +233,29 @@ def get_planned_meals():
 
     return jsonify(events)
 
-@app.route('/recipe/<int:recipe_id>/bookmark', methods=["POST"])
+
+@app.route('/all-recipes')
+@auth_required
+def get_all_recipes():
+    test_user_id = session.get("uid")
+    if not test_user_id:
+        return redirect('/login')
+
+    # Fetch all recipe lists for the user
+    recipe_lists = RecipeListModel.query.filter_by(user_id=test_user_id).all()
+
+    grouped_recipes = []
+    for recipe_list in recipe_lists:
+        # Get recipes for each list
+        recipes = recipe_list.recipe_objects()
+        grouped_recipes.append({
+            'list_name': recipe_list.name,
+            'recipes': [{'id': recipe.id, 'name': recipe.title} for recipe in recipes]
+        })
+
+    return jsonify(grouped_recipes)
+
+@app.route('/recipe/<int:recipe_id>/bookmark/', methods=["POST"])
 @auth_required
 def save_to_list(recipe_id):
     return RecipeService.bookmark_recipe(recipe_id, session)

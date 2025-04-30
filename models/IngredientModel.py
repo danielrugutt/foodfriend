@@ -11,6 +11,6 @@ class IngredientModel(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False, unique=True)
-    type = db.Column(db.Enum(IngredientType), nullable=False)
+    type = db.Column(db.Enum(IngredientType))
 
     recipes = db.relationship('RecipeIngredientModel', back_populates='ingredient')
