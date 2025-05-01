@@ -40,10 +40,6 @@
             <p><strong>Intolerances:</strong> {{ ", ".join(recipe.intolerances) }}</p>
             {% endif %}
 
-            {% if recipe.average_rating %}
-            <p><strong>Average Rating:</strong> {{ recipe.average_rating }}</p>
-            {% endif %}
-
 
         <h2>Ingredients</h2>
         <ul>
@@ -86,6 +82,16 @@
             </select>
             <input id="name_input_box" type="text" name="new_list_name" placeholder="New list name">
             <button type="submit">Save</button>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
         </form>
     {% endif %}
 

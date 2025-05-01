@@ -6,7 +6,12 @@ class SpoonacularRecipeAdapter(RecipeAdapter):
         self.ID=spoonacularID
                             
     def standardizeRecipe(self, recipe_info, steps_info):
-        recipe = RecipeBuilder(recipe_info['title'])
+        # if no title, assuming failure and returning nothing
+        try:
+            recipe = RecipeBuilder(recipe_info['title'])
+        except:
+            return None
+
         recipe.set_ID(recipe_info['id'])
         recipe.set_servings(recipe_info['servings'])
         recipe.set_cuisine(", ".join([item for item in recipe_info['cuisines']]))
