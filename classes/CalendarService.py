@@ -56,6 +56,46 @@ class CalendarService:
         return jsonify({"message": "Meal added successfully"}), 200
     
     @staticmethod
+    def delete_meal(meal_id):
+        print(f"Attempting to delete meal with ID: {meal_id}")
+        meal = PlannedMeal.query.get(meal_id)
+        if not meal:
+            return jsonify({"error": "Meal not found"}), 404
+
+        CalendarService.database.delete_planned_meal(meal)
+        return jsonify({"message": "Meal deleted successfully"})
+
+    @staticmethod
+    def edit_meal():
+        data = request.get_json()
+        meal_id = data.get("id")
+        title = data.get("title")
+        start_time = data.get("startTime")
+        notes = data.get("notes")
+        recipe_id = data.get("recipe_id")
+        start_date = data.get("start")
+
+        if not all([meal_id, title, start_time, start_date]):
+            return jsonify({"error": "Missing required fields"}), 400
+
+        try:
+            combined_datetime = datetime.strptime(f"{start_date} {start_time}", "%Y-%m-%d %H:%M")
+        except ValueError:
+            return jsonify({"error": "Invalid date/time format"}), 400
+
+        meal = PlannedMeal.query.get(meal_id)
+        if not meal:
+            return jsonify({"error": "Meal not found"}), 404
+
+        meal.title = title
+        meal.datetime = combined_datetime
+        meal.notes = notes
+        meal.recipe_id = recipe_id
+
+        CalendarService.database.commit()
+        return jsonify({"message": "Meal updated successfully"})
+    
+    @staticmethod
     def get_all_recipes():
         test_user_id = session.get("uid")
         if not test_user_id:
@@ -94,7 +134,8 @@ class CalendarService:
             end_dt = start_dt + timedelta(hours=1)
 
             events.append({
-                "title": f"{meal.title} ({meal.recipe.title})",
+                "title": f"{meal.title}",
+                "id": f"{meal.id}",
                 "start": start_dt.isoformat(),
                 "end": end_dt.isoformat(),
                 "extendedProps": {

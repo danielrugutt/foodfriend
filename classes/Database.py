@@ -252,6 +252,19 @@ class Database(metaclass=Singleton):
             db.session.commit()
 
         return planned_meal
+    
+    def delete_planned_meal(self, planned_meal):
+        """ Inserts a planned meal into the database """
+        with self.app.app_context():
+            merged_meal = db.session.merge(planned_meal)
+            db.session.delete(merged_meal)
+            db.session.commit()
+
+        return planned_meal
+    
+    def commit(self):
+        db.session.commit()
+        return True
 
 
 

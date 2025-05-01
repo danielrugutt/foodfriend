@@ -161,6 +161,17 @@ def dashboard():
 def add_meal():
     return CalendarService.add_meal(session)
 
+@app.route('/update-meal', methods=['POST'])
+@auth_required
+def update_meal():
+    return CalendarService.edit_meal()
+
+@app.route('/delete-meal/<int:meal_id>', methods=['DELETE'])
+@auth_required
+def delete_meal(meal_id):
+    return CalendarService.delete_meal(meal_id)
+
+
 @app.route('/planned-meals')
 @auth_required
 def get_planned_meals():
