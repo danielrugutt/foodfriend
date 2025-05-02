@@ -14,6 +14,10 @@
 
     <main>
         <h1>Search Results for {{search_query}}</h1>
+        {%if not results['results']%}
+            <h1>No Results Found!</h1>
+            <p1>Check your settings for any conflicting dietary restrictions</p1>
+        {% endif %}
         <ul>
         {% for item in results['results'] %}
             <li>
