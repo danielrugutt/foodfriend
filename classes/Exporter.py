@@ -13,7 +13,6 @@ class FactoryMethod():
 
     @staticmethod
     def create_exporter(recipe, export_type):
-        print(FactoryMethod.ExportType.pdf.name)
         if export_type == FactoryMethod.ExportType.pdf.name:
             return PDFExporter(recipe)
         else:
