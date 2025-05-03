@@ -3,6 +3,7 @@ from models.RecipeListModel import RecipeListModel
 from classes.SpoonacularConnection import SpoonacularConnection
 from classes.Database import Database
 from classes.Exporter import *
+from classes.Recipe import RecipeBuilder, Recipe, RecipeIngredient
 
 class RecipeService:
     database = None
@@ -12,6 +13,21 @@ class RecipeService:
         """ Initializes the database and makes it a class variable. Must be initialized before using in app.py """
         cls.database = Database(app)
         cls.database.initialize_database()
+
+        # inserting a single local recipe
+        # spoonacular has an API limit, so this just makes sure we have something to look at if we hit that limit
+        taratorRecipe = (
+            RecipeBuilder("Tarator")
+            .set_ingredients([RecipeIngredient("Cucumber", 1,), RecipeIngredient("Walnut", 0.25, "cup"), RecipeIngredient("Yogurt", 0.5, "tub")])
+            .set_steps(["Make yogurt broth", "Cut cucumber", "Add walnuts, dill, and salt"])
+            .set_cooking_time(15)
+            .set_servings(4)
+            .set_cuisine("Bulgarian")
+            .set_diet(["Vegetarian"])
+            .set_intolerances(["Dairy"])
+            .build()
+        )
+        cls.database.insert_recipe(taratorRecipe)
 
     @staticmethod
     def get_recipe_from_database(recipe_id):

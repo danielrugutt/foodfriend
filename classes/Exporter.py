@@ -13,6 +13,7 @@ class FactoryMethod():
 
     @staticmethod
     def create_exporter(recipe, export_type):
+        """ Exporter creator - creates a new exporter depending on export type """
         if export_type == FactoryMethod.ExportType.pdf.name:
             return PDFExporter(recipe)
         else:
@@ -28,6 +29,7 @@ class EmailExporter(Exporter):
         self.recipe = recipe
 
     def exportRecipe(self):
+        """ Exports a recipe via email and generates a mailto link """
         email_subject = "Cool recipe: " + self.recipe.title
 
         email_body = [
@@ -58,11 +60,13 @@ class EmailExporter(Exporter):
 class PDFExporter(Exporter):
     def __init__(self, recipe):
         self.recipe = recipe
+        # have to add fonts so non-unicode characters work
         self.font_path = "classes/../static/Roboto/Roboto.ttf"
         self.bold_font_path = "classes/../static/Roboto/Roboto-bold.ttf"
 
     # NOTE WHEN ADDING TO THIS - IF YOU DO NOT DO PDF.LN BEFORE ADDING ANOTHER CELL, FORMATTING WILL BREAK IN STRANGE AND DRAMATIC WAYS
     def exportRecipe(self):
+        """ Exports a recipe via pdf and returns a file download """
 
         # initial setup
         pdf = FPDF("P", "in", "Letter")

@@ -9,7 +9,7 @@ from app import app
 from dotenv import load_dotenv
 load_dotenv()
 
-class Test(unittest.TestCase):
+class DietaryPreferenceTest(unittest.TestCase):
 
     def test_no_dietary_prefs(self):
         """User has no dietary preferences, results should not be restricted"""
@@ -51,10 +51,11 @@ class Test(unittest.TestCase):
         expected="{'results': [], 'offset': 0, 'number': 10, 'totalResults': 0}"
         self.assertEqual(response,expected)
     
-    #########
-    # TESTING FOR "BOOKMARK RECIPE" USE CASE - 5 TOTAL PATHS
-    #########
-    # this is a bit weird, referencing https://docs.python.org/3/library/unittest.mock.html
+
+class EmailExportTest(unittest.TestCase):
+    """ Testing for 'email recipe' use case with 5 total paths
+    Natalie's test cases
+    This is a bit weird, references https://docs.python.org/3/library/unittest.mock.html """
 
     @patch('classes.RecipeService.RecipeService.get_recipe_from_database')
     def test_export_recipe_not_found(self, mock_get_recipe_from_database):
@@ -89,7 +90,6 @@ class Test(unittest.TestCase):
     @patch('classes.RecipeService.RecipeService.get_recipe_from_database')
     def test_export_recipe_no_steps_ingredients(self, mock_get_recipe_from_database):
         """ Tests output of email export when recipe has no steps and ingredients """
-        # mock recipe
         mock_recipe = MagicMock()
         mock_recipe.title = "Cake"
         mock_recipe.cooking_time = 30
@@ -105,7 +105,6 @@ class Test(unittest.TestCase):
     @patch('classes.RecipeService.RecipeService.get_recipe_from_database')
     def test_export_recipe_only_ingredients(self, mock_get_recipe_from_database):
         """ Tests output of email export when recipe has ingredients, but no steps """
-        # mock recipe
         mock_recipe = MagicMock()
         mock_recipe.title = "Cake"
         mock_recipe.cooking_time = 30
@@ -122,7 +121,6 @@ class Test(unittest.TestCase):
     @patch('classes.RecipeService.RecipeService.get_recipe_from_database')
     def test_export_recipe_only_steps(self, mock_get_recipe_from_database):
         """ Tests output of email export when recipe has steps, but no ingredients """
-        # mock recipe
         mock_recipe = MagicMock()
         mock_recipe.title = "Cake"
         mock_recipe.cooking_time = 30
@@ -136,7 +134,6 @@ class Test(unittest.TestCase):
 
         self.assertEqual(response.status, "302 FOUND")
         self.assertEqual(ideal_result, response.headers['Location'])
-
 
 if __name__ == '__main__':
     unittest.main()

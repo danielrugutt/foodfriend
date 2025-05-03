@@ -32,22 +32,6 @@ CORS(app, supports_credentials=True) # Secure cross origin requests support
 database = Database(app)
 db = database.initialize_database()
 
-# test recipe
-taratorRecipe = (
-    RecipeBuilder("Tarator")
-    .set_ingredients([RecipeIngredient("Cucumber", 1,), RecipeIngredient("Walnut", 0.25, "cup"), RecipeIngredient("Yogurt", 0.5, "tub")])
-    .set_steps(["Make yogurt broth", "Cut cucumber", "Add walnuts, dill, and salt"])
-    .set_cooking_time(15)
-    .set_nutrition_info(Nutrition(600, 25, 75, 20))
-    .set_servings(4)
-    .set_cuisine("Bulgarian")
-    .set_diet(["Vegetarian"])
-    .set_intolerances(["Dairy"])
-    .build()
-)
-database.insert_recipe(taratorRecipe)
-
-
 def get_current_user():
     uid = session.get("uid")
     if not uid:
@@ -58,7 +42,6 @@ def get_current_user():
 @app.route('/auth', methods=['POST'])
 def auth_route():
     return AuthService.authorize()
-
 
 """ GUEST ROUTES """
 @app.route('/')
@@ -74,12 +57,9 @@ def search():
 @app.route('/search-similar/<int:recipe_id>/<string:orig_recipe>', methods=['GET', 'POST'])
 def search_similar(recipe_id,orig_recipe):
     return SearchService.search_similar(recipe_id,orig_recipe)
-    
 
 @app.route('/settings', methods=['POST','GET'])
 def settings():
-    #TESTING ONLY
-    #global test_user
     uid = session.get("uid")
     #if needed saved the changes to dietary pref to DB either here or in the method which ever is easier
     return SearchService.settings(uid, request.method)
@@ -106,7 +86,6 @@ def signup():
         return redirect(url_for('dashboard'))
     else:
         return render_template('signup.html')
-
 
 @app.route('/reset-password')
 def reset_password():
@@ -144,7 +123,6 @@ def update_meal():
 @auth_required
 def delete_meal(meal_id):
     return CalendarService.delete_meal(meal_id)
-
 
 @app.route('/planned-meals')
 @auth_required
