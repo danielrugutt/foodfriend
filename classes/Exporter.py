@@ -59,18 +59,23 @@ class EmailExporter(Exporter):
 class PDFExporter(Exporter):
     def __init__(self, recipe):
         self.recipe = recipe
+        self.font_path = "classes/../static/Roboto/Roboto.ttf"
+        self.bold_font_path = "classes/../static/Roboto/Roboto-bold.ttf"
 
     # NOTE WHEN ADDING TO THIS - IF YOU DO NOT DO PDF.LN BEFORE ADDING ANOTHER CELL, FORMATTING WILL BREAK IN STRANGE AND DRAMATIC WAYS
     def exportRecipe(self):
+
         # initial setup
         pdf = FPDF("P", "in", "Letter")
         pdf.add_page()
-        pdf.set_font("Courier", "b", size=16)
+        pdf.add_font('Roboto', '', self.font_path, uni=True)
+        pdf.add_font('Roboto-bold', '', self.bold_font_path, uni=True)
+        pdf.set_font("Roboto-bold", '', size=16)
         pdf.cell(0, 0.5, self.recipe.title)
         pdf.ln(0.5)
 
         # cooking time, servings
-        pdf.set_font("Courier", '', size=12)
+        pdf.set_font("Roboto", '', size=12)
         pdf.cell(0, 0.3, "Cooking time: " + str(self.recipe.cooking_time) + " minutes")
         pdf.ln(0.3)
         pdf.cell(0, 0.3, "Servings: " +  str(self.recipe.servings))

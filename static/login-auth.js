@@ -49,6 +49,8 @@ const loginURL          = window.location.origin + '/login';
 const signupURL         = window.location.origin + '/signup';
 const profileURL        = window.location.origin + '/profile';
 const settingsURL       = window.location.origin + '/settings';
+const homeURL           = window.location.origin + '/';
+
 
 
 /* === Main Code === */
@@ -84,7 +86,7 @@ onAuthStateChanged(auth, (user) => {
         console.log("User is not signed in");
 
         // Redirect to login if trying to access a protected page
-        const publicPages = [indexURL, loginURL, forgotPasswordURL, signupURL];
+        const publicPages = [indexURL, loginURL, forgotPasswordURL, signupURL, homeURL];
         if (!publicPages.includes(url)) {
             window.location.replace(loginURL);
         }
