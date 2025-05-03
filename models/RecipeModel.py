@@ -18,9 +18,10 @@ class RecipeModel(db.Model):
     intolerances = db.Column(db.LargeBinary)
     img_url = db.Column(db.String)
 
-    # Define the reverse relationship to PlannedMeal
+    # association with planned meal
     plannedmeals = db.relationship("PlannedMeal", back_populates="recipe", cascade="all, delete-orphan")
 
+    # manually declaring init due to the to blob methods needed
     def __init__(self, title, cooking_time, servings, cuisine, steps, diet, intolerances, img_url):
         self.title = title
         self.cooking_time = cooking_time
@@ -32,9 +33,11 @@ class RecipeModel(db.Model):
         self.img_url = img_url
 
     def to_blob(self, data):
+        """ Turns data into json format"""
         return json.dumps(data).encode("utf-8") if data else b''
 
     def from_blob(self, blob_data):
+        """ Grabs data from json format """
         return json.loads(blob_data.decode("utf-8")) if blob_data else []
 
     def get_steps(self):

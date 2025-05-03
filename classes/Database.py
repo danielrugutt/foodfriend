@@ -24,6 +24,7 @@ class Singleton(ABCMeta):
         return database_class._instances[database_class]
 
 class DatabaseInterface(ABC, metaclass=Singleton):
+    """ A database interface that all database implementations can be based on """
     @abstractmethod
     def initialize_database(self):
         pass
@@ -134,6 +135,7 @@ class Database(DatabaseInterface):
         return recipe_object.ID
     
     def get_user_preferences(self, uid):
+        """ Sets user preferences to a given UID """
         dietary_preference = DietaryPreferenceModel.query.filter_by(user_id=uid).first()
         if dietary_preference is None:
             dietary_preference = DietaryPreferenceModel(user_id=uid, exclude_cuisine="", exclude_ingredients="", max_sugar=999, intolerances="", diets="")
@@ -267,6 +269,7 @@ class Database(DatabaseInterface):
 
 
     def add_recipe_to_list(self, uid, recipe_id, list_id=None):
+        """ Adds the given recipe to the given list, pulls the UID to make sure it's associated to the user """
         with self.app.app_context():
             user_model = UserModel.query.filter_by(id=uid).first()
             recipe_model = RecipeModel.query.get(recipe_id)
@@ -294,6 +297,7 @@ class Database(DatabaseInterface):
 
 
     def create_named_list(self, uid, list_name):
+        """ Creates a list with list_name as the name, associates it to the UID """
         with self.app.app_context():
             new_list = RecipeListModel(name=list_name, user_id=uid)
             db.session.add(new_list)
@@ -318,9 +322,6 @@ class Database(DatabaseInterface):
 
         return planned_meal
     
-    def commit(self):
-        db.session.commit()
-        return True
 
 
 
