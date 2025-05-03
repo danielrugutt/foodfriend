@@ -16,6 +16,7 @@ class CalendarService:
 
     @staticmethod
     def add_meal(session):
+        """ Creates a planned meal and adds it to the database """
         data = request.get_json()
 
         title = data.get("title")
@@ -57,7 +58,7 @@ class CalendarService:
     
     @staticmethod
     def delete_meal(meal_id):
-        print(f"Attempting to delete meal with ID: {meal_id}")
+        """ Deletes a meal from the database given its id """
         meal = PlannedMeal.query.get(meal_id)
         if not meal:
             return jsonify({"error": "Meal not found"}), 404
@@ -67,6 +68,7 @@ class CalendarService:
 
     @staticmethod
     def edit_meal():
+        """ Updates a meal in the database with new information """
         data = request.get_json()
         meal_id = data.get("id")
         title = data.get("title")
@@ -97,6 +99,7 @@ class CalendarService:
     
     @staticmethod
     def get_all_recipes():
+        """ Retrieves and formats all the bookmarked recipes and the list they belong to """
         test_user_id = session.get("uid")
         if not test_user_id:
             return redirect('/login')
@@ -117,6 +120,7 @@ class CalendarService:
     
     @staticmethod
     def get_planned_meals():
+        """ Retrievs all the planned meals from the database, formats them, and returns a json with them """
         user_id = session.get("uid")
         if not user_id:
             return jsonify({"error": "User not logged in"}), 401

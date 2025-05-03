@@ -3,9 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Meal Planner Calendar</title>
-  <!-- FullCalendar CSS -->
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet" />
-  <!-- FullCalendar Core -->
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
 
   <style>
@@ -38,7 +36,9 @@
       cursor: pointer;
     }
 
-    #mealForm input, #mealForm textarea, #mealForm select {
+    #mealForm input,
+    #mealForm textarea,
+    #mealForm select {
       width: 100%;
       margin-bottom: 10px;
       padding: 8px 6px;
@@ -57,14 +57,13 @@
     }
 
     #deleteMealBtn {
-      width: 100%;
-      padding: 10px;
-      margin-top: 10px;
       background-color: #ef4444 !important;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    #editMealBtn {
+      background-color: #10b981 !important;
+      margin-top: 10px;
     }
 
     #calendar {
@@ -75,186 +74,221 @@
 </head>
 <body>
 
-  <div id="calendar"></div>
+<div id="calendar"></div>
 
-  <!-- Modal for adding/editing meal -->
-  <div id="mealModal" class="modal">
-    <div class="modal-content">
-      <span class="close" id="modalClose">&times;</span>
-      <h3 id="modalTitle">Plan a Meal</h3>
-      <form id="mealForm">
-        <label for="mealTitle">Title:</label>
-        <input type="text" id="mealTitle" required>
+<!-- Modal -->
+<div id="mealModal" class="modal">
+  <div class="modal-content">
+    <span class="close" id="modalClose">&times;</span>
+    <h3 id="modalTitle">Plan a Meal</h3>
+    <!-- Inside your existing modal -->
+  <form id="mealForm">
+    <label for="mealTitle">Title:</label>
+    <input type="text" id="mealTitle" required>
 
-        <label for="startTime">Start Time:</label>
-        <input type="text" id="startTime" required>
+    <label for="startTime">Start Time:</label>
+    <input type="text" id="startTime" required>
 
-        <label for="recipeSelect">Choose a Recipe:</label>
-        <select id="recipeSelect" required>
-          <option value="">-- Select a recipe --</option>
-        </select>
+    <label for="recipeSelect">Choose a Recipe:</label>
+    <select id="recipeSelect" required>
+      <option value="">-- Select a recipe --</option>
+    </select>
 
-        <label for="mealNotes">Notes:</label>
-        <textarea id="mealNotes" rows="4"></textarea>
+    <label for="mealNotes">Notes:</label>
+    <textarea id="mealNotes" rows="4"></textarea>
 
-        <button type="submit">Add Meal</button>
-        <button type="button" id="deleteMealBtn" style="display:none">Delete Meal</button>
-      </form>
-    </div>
+    <button type="submit" id="submitMealBtn">Add Meal</button>
+    <button type="button" id="viewRecipeBtn" style="display: none; background-color: #6366f1; margin-top: 10px;">
+      View Recipe
+    </button>    
+    <button type="button" id="editMealBtn" style="display: none;">Edit/Delete Meal</button>
+    <button type="button" id="deleteMealBtn" style="display: none;">Delete Meal</button>
+  </form>
   </div>
+</div>
 
-  <script>
-    let selectedDate = null;
-    let currentMealId = null;
-    let isEditMode = false;
-    let calendar;
+<script>
+  let selectedDate = null;
+  let currentMealId = null;
+  let isEditMode = false;
+  let calendar;
 
-    document.addEventListener('DOMContentLoaded', function() {
-      const calendarEl = document.getElementById('calendar');
+  function setFormEditable(isEditable, isNewMeal = false, recipeId = null) {
+    document.getElementById('mealTitle').readOnly = !isEditable;
+    document.getElementById('startTime').readOnly = !isEditable;
+    document.getElementById('mealNotes').readOnly = !isEditable;
+    document.getElementById('recipeSelect').disabled = !isEditable;
 
-      calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
+    document.getElementById('submitMealBtn').style.display = isEditable ? 'block' : 'none';
+    document.getElementById('submitMealBtn').textContent = isNewMeal ? "Add Meal" : "Update Meal";
+    document.getElementById('editMealBtn').style.display = (!isEditable && !isNewMeal) ? 'block' : 'none';
+    document.getElementById('deleteMealBtn').style.display = (isEditable && !isNewMeal) ? 'block' : 'none';
+    document.getElementById('viewRecipeBtn').style.display = (!isEditable && !isNewMeal && recipeId) ? 'block' : 'none';
+  }
 
-        dateClick: function(info) {
-          selectedDate = info.dateStr;
-          isEditMode = false;
-          currentMealId = null;
+  document.addEventListener('DOMContentLoaded', function() {
+    const calendarEl = document.getElementById('calendar');
 
-          document.getElementById('mealTitle').value = '';
-          document.getElementById('startTime').value = '';
-          document.getElementById('mealNotes').value = '';
-          document.getElementById('recipeSelect').selectedIndex = 0;
+    calendar = new FullCalendar.Calendar(calendarEl, {
+      initialView: 'dayGridMonth',
 
-          document.querySelector('#mealForm button').textContent = "Add Meal";
-          document.getElementById('deleteMealBtn').style.display = 'none';
+      // When adding a meal
+      dateClick: function(info) {
+        selectedDate = info.dateStr;
+        isEditMode = false;
+        currentMealId = null;
 
-          document.getElementById('mealModal').style.display = 'flex';
-        },
+        document.getElementById('mealTitle').value = '';
+        document.getElementById('startTime').value = '';
+        document.getElementById('mealNotes').value = '';
+        document.getElementById('recipeSelect').selectedIndex = 0;
 
-        eventClick: function(info) {
-          const event = info.event;
+        document.getElementById('modalTitle').textContent = "Plan a Meal";
+        setFormEditable(true, true); // editable, new meal
 
-          isEditMode = true;
-          currentMealId = event.id;
-          selectedDate = event.startStr.split('T')[0];
+        document.getElementById('mealModal').style.display = 'flex';
+      },
 
-          document.getElementById('mealTitle').value = event.title || '';
-          document.getElementById('startTime').value = event.start.toTimeString().slice(0,5);
-          document.getElementById('mealNotes').value = event.extendedProps.notes || '';
-          document.getElementById('recipeSelect').value = event.extendedProps.recipe_id || '';
+      // When viewing a meal
+      eventClick: function(info) {
+        const event = info.event;
 
-          document.querySelector('#mealForm button').textContent = "Update Meal";
-          document.getElementById('deleteMealBtn').style.display = 'block';
+        selectedDate = event.startStr.split('T')[0];
+        currentMealId = event.id;
+        isEditMode = true;
 
-          document.getElementById('mealModal').style.display = 'flex';
-        },
+        const recipeId = event.extendedProps.recipe_id || '';
 
-        events: '/planned-meals'
-      });
+        document.getElementById('mealTitle').value = event.title || '';
+        document.getElementById('startTime').value = event.start.toTimeString().slice(0,5);
+        document.getElementById('mealNotes').value = event.extendedProps.notes || '';
+        document.getElementById('recipeSelect').value = recipeId;
 
-      calendar.render();
-      loadAllRecipes();
+        document.getElementById('modalTitle').textContent = "View Meal";
+        setFormEditable(false, false, recipeId); // view-only mode
+
+        document.getElementById('mealModal').style.display = 'flex';
+      },
+
+      events: '/planned-meals'
     });
 
-    async function loadAllRecipes() {
-      try {
-        const response = await fetch('/all-recipes');
-        const data = await response.json();
-        const recipeSelect = document.getElementById('recipeSelect');
+    calendar.render();
+    loadAllRecipes();
+  });
 
-        recipeSelect.innerHTML = '<option value="">-- Select a recipe --</option>';
+  async function loadAllRecipes() {
+    try {
+      const response = await fetch('/all-recipes');
+      const data = await response.json();
+      const recipeSelect = document.getElementById('recipeSelect');
 
-        data.forEach(list => {
-          const optgroup = document.createElement('optgroup');
-          optgroup.label = list.list_name;
+      recipeSelect.innerHTML = '<option value="">-- Select a recipe --</option>';
 
-          list.recipes.forEach(recipe => {
-            const option = document.createElement('option');
-            option.value = recipe.id;
-            option.textContent = recipe.name;
-            optgroup.appendChild(option);
-          });
+      data.forEach(list => {
+        const optgroup = document.createElement('optgroup');
+        optgroup.label = list.list_name;
 
-          recipeSelect.appendChild(optgroup);
+        list.recipes.forEach(recipe => {
+          const option = document.createElement('option');
+          option.value = recipe.id;
+          option.textContent = recipe.name;
+          optgroup.appendChild(option);
         });
-      } catch (err) {
-        console.error("Failed to load recipes", err);
-      }
+
+        recipeSelect.appendChild(optgroup);
+      });
+    } catch (err) {
+      console.error("Failed to load recipes", err);
     }
+  }
 
-    const modal = document.getElementById('mealModal');
-    const closeBtn = document.getElementById('modalClose');
-    const form = document.getElementById('mealForm');
+  document.getElementById('modalClose').onclick = () => {
+    document.getElementById('mealModal').style.display = 'none';
+  };
 
-    closeBtn.onclick = () => modal.style.display = 'none';
-    window.onclick = (e) => {
-      if (e.target == modal) modal.style.display = 'none';
+  window.onclick = (e) => {
+    if (e.target == document.getElementById('mealModal')) {
+      document.getElementById('mealModal').style.display = 'none';
+    }
+  };
+
+  document.getElementById('mealForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const title = document.getElementById('mealTitle').value.trim();
+    const startTime = document.getElementById('startTime').value.trim();
+    const notes = document.getElementById('mealNotes').value.trim();
+    const recipeId = parseInt(document.getElementById('recipeSelect').value);
+
+    const payload = {
+      title: title,
+      startTime: startTime,
+      notes: notes,
+      recipe_id: recipeId,
+      start: selectedDate
     };
 
-    form.addEventListener('submit', function(e) {
-      e.preventDefault();
+    if (isEditMode && currentMealId) {
+      payload.id = currentMealId;
+      fetch('/update-meal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).then(response => {
+        if (response.ok) {
+          document.getElementById('mealModal').style.display = 'none';
+          calendar.refetchEvents();
+        } else {
+          alert("Failed to update meal.");
+        }
+      });
+    } else {
+      fetch('/add-meal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).then(response => {
+        if (response.ok) {
+          document.getElementById('mealModal').style.display = 'none';
+          calendar.refetchEvents();
+        } else {
+          alert("Failed to add meal.");
+        }
+      });
+    }
+  });
 
-      const title = document.getElementById('mealTitle').value.trim();
-      const startTime = document.getElementById('startTime').value.trim();
-      const notes = document.getElementById('mealNotes').value.trim();
-      const recipeId = parseInt(document.getElementById('recipeSelect').value);
+  // Enable editing after clicking "Edit/Delete Meal"
+  document.getElementById('editMealBtn').addEventListener('click', function() {
+    document.getElementById('modalTitle').textContent = "Edit Meal";
+    setFormEditable(true, false);
+  });
 
-      const payload = {
-        title: title,
-        startTime: startTime,
-        notes: notes,
-        recipe_id: recipeId,
-        start: selectedDate
-      };
+  document.getElementById('viewRecipeBtn').addEventListener('click', function() {
+    const recipeId = document.getElementById('recipeSelect').value;
+    if (recipeId) {
+      window.location.href = `/recipe/${recipeId}`;
+    }
+  });
 
-      if (isEditMode && currentMealId) {
-        payload.id = currentMealId;
-        fetch('/update-meal', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        }).then(response => {
-          if (response.ok) {
-            modal.style.display = 'none';
-            calendar.refetchEvents();
-          } else {
-            alert("Failed to update meal.");
-          }
-        });
-      } else {
-        fetch('/add-meal', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        }).then(response => {
-          if (response.ok) {
-            modal.style.display = 'none';
-            calendar.refetchEvents();
-          } else {
-            alert("Failed to add meal.");
-          }
-        });
-      }
-    });
 
-    document.getElementById('deleteMealBtn').addEventListener('click', function() {
-      console.log("Deleting meal with ID:", currentMealId);
-      if (!currentMealId) return;
+  document.getElementById('deleteMealBtn').addEventListener('click', function() {
+    if (!currentMealId) return;
 
-      console.log("Deleting meal with ID:", currentMealId);
-      if (confirm("Are you sure you want to delete this meal?")) {
-        fetch(`/delete-meal/${currentMealId}`, {
-          method: 'DELETE'
-        }).then(response => {
-          if (response.ok) {
-            modal.style.display = 'none';
-            calendar.refetchEvents();
-          } else {
-            alert("Failed to delete meal.");
-          }
-        });
-      }
-    });
-  </script>
+    if (confirm("Are you sure you want to delete this meal?")) {
+      fetch(`/delete-meal/${currentMealId}`, {
+        method: 'DELETE'
+      }).then(response => {
+        if (response.ok) {
+          document.getElementById('mealModal').style.display = 'none';
+          calendar.refetchEvents();
+        } else {
+          alert("Failed to delete meal.");
+        }
+      });
+    }
+  });
+</script>
 </body>
 </html>

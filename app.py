@@ -48,12 +48,6 @@ taratorRecipe = (
 database.insert_recipe(taratorRecipe)
 
 
-def get_current_user():
-    uid = session.get("uid")
-    if not uid:
-        return None
-    return UserModel.query.filter_by(id=uid).first()
-
 """ AUTHENTICATION ROUTES """
 @app.route('/auth', methods=['POST'])
 def auth_route():
