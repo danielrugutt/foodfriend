@@ -7,7 +7,6 @@ class RecipeIngredientModel(db.Model):
     quantity = db.Column(db.Float)
     unit = db.Column(db.String)
 
-
     recipe_id = db.Column(db.Integer, db.ForeignKey('Recipe.id'), nullable=False)
     ingredient_id = db.Column(db.Integer, db.ForeignKey('Ingredient.id'), nullable=False)
 

@@ -5,8 +5,8 @@ class PlannedMeal(db.Model):
     __tablename__ = 'PlannedMeal'
 
     id = db.Column(db.Integer, primary_key=True)
-    recipe_id = db.Column(db.Integer, db.ForeignKey('Recipe.id'), nullable=False)  # ForeignKey pointing to Recipe table
-    user_id = db.Column(db.Integer, db.ForeignKey('User.id'), nullable=False)  # ForeignKey pointing to UserModel table
+    recipe_id = db.Column(db.Integer, db.ForeignKey('Recipe.id'), nullable=False)  # foreign key pointing to Recipe table
+    user_id = db.Column(db.Integer, db.ForeignKey('User.id'), nullable=False)  # foreign key pointing to UserModel table
 
     recipe = db.relationship("RecipeModel", back_populates="plannedmeals")
     user = db.relationship("UserModel", back_populates="plannedmeals")

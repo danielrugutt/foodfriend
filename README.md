@@ -1,3 +1,6 @@
+# FoodFriend
+Search for recipes according to your diet, schedule meals, bookmark them, and more!
+
 ### Initial setup
 Make sure Node and Python are installed on your machine first!
 1. Clone the repo into your current directory
@@ -35,7 +38,7 @@ npm install
 npm install -g firebase-tools
 ```
 
-6. Make .env & firebase-auth.json in the root directory, and get the keys needed (will probably make a sendto link for this)
+6. Make .env & firebase-auth.json in the root directory, and download the keys from Sendto 
 
 ### To run
 If using a venv and not in it, make sure to start it first.
@@ -55,10 +58,13 @@ Then run it with this!
 python app.py
 ```
 
-You should then be able to use it on http://127.0.0.1:5000.
+Then go to http://127.0.0.1:5000 to use a local version of FoodFriend.
 
-### Wait, how do I deploy this to the Firebase live link?
-Good question. I'm not entirely sure. Accounts work correctly and are hooked up to the database, but unfortunately the live link doesn't work as intended.
+
+If you'd like to run the test file instead, run with this:
+``` sh
+python test_foodfriend.py
+``` 
 
 ### Contributors
 - Van Anderson: Van-Anderson

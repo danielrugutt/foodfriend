@@ -2,6 +2,7 @@ from db import db
 import enum
 
 class IngredientType(enum.Enum):
+    """ Represents categories of ingredients """
     PROTEIN = "Protein"
     DAIRY = "Dairy"
     OTHER = "Other"

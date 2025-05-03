@@ -1,10 +1,11 @@
 from typing import List
 
 class RecipeIngredient:
-    # units not always needed - eggs, for example
+    """ Represents all ingredients in a recipe. This is not a list of all ingredients - that's instead stored in the database as just 'ingredient' """
     def __init__(self, name: str, quantity: float, unit: str = None):
         self.name = name
         self.quantity = quantity
+        # units not always needed - eggs, for example, so it's defaulted to none
         self.unit = unit
 
     def __str__(self):
@@ -20,6 +21,7 @@ class Nutrition:
         self.fats = fats
 
 class Recipe:
+    """ Represents a recipe """
     def __init__(self, title: str, ingredients: List[RecipeIngredient], steps: List[str],
                  cooking_time: int, nutrition_info: Nutrition, servings: int, cuisine: str,
                  diet: List[str], intolerances: List[str], ID: int, img_url: str = None):
@@ -36,6 +38,7 @@ class Recipe:
         self.ID = ID
 
 class RecipeBuilder:
+    """ Recipe builder for Recipe """
     def __init__(self, title):
         self.title = title
         self.ingredients = []
@@ -91,6 +94,7 @@ class RecipeBuilder:
         return self
 
     def build(self):
+        """ Builds and returns the recipe """
         return Recipe(self.title, self.ingredients, self.steps,
                       self.cooking_time, self.nutrition_info, self.servings,
                       self.cuisine, self.diet, self.intolerances, self.ID,self.img_url)
