@@ -322,6 +322,11 @@ class Database(DatabaseInterface):
 
         return planned_meal
     
+    def commit(self):
+         """ (Keep) Commits changes to the database """
+         db.session.commit()
+         return True
+    
 
 
 
