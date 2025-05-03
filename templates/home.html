@@ -11,16 +11,13 @@
   </head>
 
   <body>
-
-    {% include 'navbar_public.html' %}
-
+        {% include 'navbar_private.html' %}
 
     <main>
 
-      <h1>Home Page</h1>
-
-      <p>This is a public page that anyone can view.</p>
-      <p>View a recipe <a href="recipe/1">here.</a> Note that this will not work if the sqlite database isn't working as intended.</p>
+      <h1>Welcome to FoodFriend!</h1>
+        <p>If you'd like to sign in, you can do so <a href="login">here</a>. Lots of the buttons up top will redirect you to the login screen repeatedly until signing in.</p>
+        <p>View a recipe <a href="recipe/1">here.</a> You don't need to be logged in to do that!</p>
     </main>
 
 

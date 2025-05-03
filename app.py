@@ -69,7 +69,7 @@ def home():
 def search():
     uid = session.get("uid")
     return SearchService.search(uid,request)
-    
+
 
 @app.route('/search-similar/<int:recipe_id>/<string:orig_recipe>', methods=['GET', 'POST'])
 def search_similar(recipe_id,orig_recipe):
