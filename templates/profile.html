@@ -10,7 +10,7 @@
   <body>
     {% include 'navbar_private.html' %}
     <main>
-    <h1>Profile</h1>
+    <h1 id="profile-title">Profile</h1>
         <div>
             <label>Change email:</label>
             <input type="text" id="emailChangeInput"/>
@@ -43,8 +43,7 @@
         </div>
     </main>
 0
-    <script src="../static/delete-account.js"></script>
-    <script src="../static/change-email.js" type="module"></script>
+    <script src="../static/profile.js" type="module"></script>
     <script src="{{ url_for('static', filename='login-auth.js') }}" type="module"></script>
   </body>
 </html>
