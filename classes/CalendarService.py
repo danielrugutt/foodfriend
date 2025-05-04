@@ -34,7 +34,7 @@ class CalendarService:
             combined_datetime = datetime.strptime(f"{start_date} {start_time}", "%Y-%m-%d %H:%M")
         except ValueError:
             return jsonify({"error": "Invalid time format. Use 24 Hour format (00:00)"}), 400
-
+        
         user_id = session.get("uid")
         if not user_id:
             return jsonify({"error": "User not logged in"}), 401

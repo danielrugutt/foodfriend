@@ -239,7 +239,8 @@ class AddMealTest(unittest.TestCase):
             "startTime": "12:30",
             "notes": "Healthy food",
             "recipe_id": 1,
-            "start": "2025-04-30"
+            "start": "2025-04-30",
+            "serving_size": 2  
         }
         self.mock_session = {"uid": "user123"}
 
@@ -248,7 +249,6 @@ class AddMealTest(unittest.TestCase):
 
     @patch('classes.CalendarService.CalendarService.database')
     def test_add_meal_success(self, mock_db):
-        """Tests meal addition when input is valid and recipe is present"""
         mock_user = MagicMock()
         mock_recipe = MagicMock()
         mock_recipe_model = MagicMock()
@@ -265,7 +265,6 @@ class AddMealTest(unittest.TestCase):
         self.assertEqual(response.get_json()["message"], "Meal added successfully")
 
     def test_add_meal_missing_required_fields(self):
-        """Tests meal addition fails when required fields are missing"""
         incomplete_data = self.valid_data.copy()
         incomplete_data.pop("startTime")
 
@@ -276,18 +275,16 @@ class AddMealTest(unittest.TestCase):
         self.assertEqual(response.get_json()["error"], "Missing required fields")
 
     def test_add_meal_invalid_datetime_format(self):
-        """Tests meal addition fails with invalid date/time format"""
         invalid_data = self.valid_data.copy()
-        invalid_data["startTime"] = "99:99"  # Invalid time
+        invalid_data["startTime"] = "99:99"
 
         with app.test_request_context(json=invalid_data):
             response, status = CalendarService.add_meal(self.mock_session)
 
         self.assertEqual(status, 400)
-        self.assertEqual(response.get_json()["error"], "Invalid date or time format")
+        self.assertEqual(response.get_json()["error"], "Invalid time format. Use 24 Hour format (00:00)")
 
     def test_add_meal_user_not_logged_in(self):
-        """Tests meal addition fails when session lacks a user ID"""
         with app.test_request_context(json=self.valid_data):
             response, status = CalendarService.add_meal(session={})
 
@@ -296,7 +293,6 @@ class AddMealTest(unittest.TestCase):
 
     @patch('classes.CalendarService.CalendarService.database')
     def test_add_meal_user_not_found(self, mock_db):
-        """Tests meal addition fails when user is not found"""
         mock_db.get_user.return_value = None
 
         with app.test_request_context(json=self.valid_data):
@@ -307,7 +303,6 @@ class AddMealTest(unittest.TestCase):
 
     @patch('classes.CalendarService.CalendarService.database')
     def test_add_meal_without_recipe(self, mock_db):
-        """Tests meal addition succeeds when recipe is not included"""
         mock_user = MagicMock()
 
         mock_db.get_user.return_value = mock_user
@@ -323,6 +318,7 @@ class AddMealTest(unittest.TestCase):
 
         self.assertEqual(status, 200)
         self.assertEqual(response.get_json()["message"], "Meal added successfully")
+
 
 
 if __name__ == '__main__':
