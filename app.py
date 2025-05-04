@@ -40,7 +40,10 @@ def auth_route():
 """ GUEST ROUTES """
 @app.route('/')
 def home():
-    render_template('login.html')
+    if 'user' in session:
+        return redirect(url_for('dashboard'))
+    else:
+        return render_template('login.html')
 
 @app.route('/search', methods=['GET', 'POST'])
 def search():
