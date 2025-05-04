@@ -4,6 +4,7 @@ from flask import request, session
 from classes.SpoonacularConnection import SpoonacularConnection
 from classes.DietaryPreference import DietaryPreference
 from classes.RecipeService import RecipeService
+from classes.AuthService import AuthService
 import time
 from app import app
 from dotenv import load_dotenv
@@ -134,6 +135,92 @@ class EmailExportTest(unittest.TestCase):
 
         self.assertEqual(response.status, "302 FOUND")
         self.assertEqual(ideal_result, response.headers['Location'])
+
+# @patch('classes.AuthService.auth')
+class AuthServiceTest(unittest.TestCase):
+    
+    def setUp(self):
+        app.testing = True
+        self.app = app.test_client()
+        
+    def tearDown(self):
+        """Clean up the app context after each test."""
+        app.view_functions.pop('protected', None)
+
+    @patch('classes.AuthService.auth.verify_id_token')
+    def test_authorize_valid_token(self, mock_verify_id_token):
+        """Test the /auth route with a valid Firebase ID token."""
+        # Mock the Firebase ID token verification
+        mock_verify_id_token.return_value = {'uid': '12345', 'email': 'test@example.com'}
+
+        # Simulate a POST request to the /auth route with a valid token
+        response = self.app.post('/auth', headers={
+            'Authorization': 'Bearer valid_token'
+        })
+
+        # Assert the response
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'User authenticated successfully', response.data)
+        
+    @patch('classes.AuthService.auth.verify_id_token')
+    def test_authorize_invalid_token(self, mock_verify_id_token):
+        """Test the /auth route with an invalid Firebase ID token."""
+        # Mock the Firebase ID token verification to raise an exception
+        mock_verify_id_token.side_effect = Exception("Invalid token")
+
+        # Simulate a POST request to the /auth route with an invalid token
+        response = self.app.post('/auth', headers={
+            'Authorization': 'Bearer invalid_token'
+        })
+
+        # Assert the response
+        self.assertEqual(response.status_code, 401)
+        self.assertIn(b'Unauthorized', response.data)
+        
+    @patch('classes.AuthService.auth.verify_id_token')
+    def test_logout(self, mock_verify_id_token):
+        """Test the /logout route to ensure the user is logged out."""
+        # Simulate a user session
+        with self.app.session_transaction() as session:
+            session['user'] = {'uid': '12345', 'email': 'test@example.com'}
+
+        # Simulate a GET request to the /logout route
+        response = self.app.get('/logout')
+
+        # Assert the response
+        self.assertEqual(response.status_code, 302)  # Redirect to login
+        self.assertIn('/login', response.location)
+        
+        # Ensure the session is cleared
+        with self.app.session_transaction() as session:
+            self.assertNotIn('user', session)
+
+    def test_auth_required_decorator(self):
+        """Test the @auth_required decorator to enforce authentication."""
+        @app.route('/protected')
+        @AuthService.auth_required
+        def protected_route():
+            return "Protected content", 200
+
+        # Simulate a request without a user session
+        response = self.app.get('/protected')
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/login', response.location)  # Check for relative URL
+
+        # Add a user session to simulate authentication
+        with self.app.session_transaction() as session:
+            session['user'] = {'uid': '12345', 'email': 'test@example.com'}
+
+        # Simulate a request with a user session
+        response = self.app.get('/protected')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'Protected content', response.data)
+
+    def test_authorize_missing_token(self):
+        """Test the /auth route with a missing Authorization header."""
+        response = self.app.post('/auth')  # No headers
+        self.assertEqual(response.status_code, 401)
+        self.assertIn(b'"error":"Authorization header missing or invalid"', response.data)
 
 if __name__ == '__main__':
     unittest.main()
