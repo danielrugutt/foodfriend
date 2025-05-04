@@ -5,6 +5,7 @@ from models.UserModel import UserModel
 from models.RecipeModel import RecipeModel
 from models.RecipeListModel import RecipeListModel
 from models.PlannedMeal import PlannedMeal
+
 class CalendarService:
     database = None
 
@@ -21,17 +22,18 @@ class CalendarService:
 
         title = data.get("title")
         start_time = data.get("startTime")  # e.g., "14:00"
+        serving_size = data.get("serving_size")
         notes = data.get("notes")
         recipe_id = data.get("recipe_id")
         start_date = data.get("start")      # e.g., "2025-04-29"
 
-        if not all([title, start_time, start_date]):
+        if not all([title, start_time, start_date, serving_size]):
             return jsonify({"error": "Missing required fields"}), 400
 
         try:
             combined_datetime = datetime.strptime(f"{start_date} {start_time}", "%Y-%m-%d %H:%M")
         except ValueError:
-            return jsonify({"error": "Invalid date or time format"}), 400
+            return jsonify({"error": "Invalid time format. Use 24 Hour format (00:00)"}), 400
 
         user_id = session.get("uid")
         if not user_id:
@@ -47,6 +49,7 @@ class CalendarService:
         new_meal = PlannedMeal(
             title=title,
             datetime=combined_datetime,
+            serving_size=serving_size,
             notes=notes,
             user=user,
             recipe=recipe_model if recipe_model else None
@@ -72,24 +75,26 @@ class CalendarService:
         data = request.get_json()
         meal_id = data.get("id")
         title = data.get("title")
+        serving_size = data.get("serving_size")
         start_time = data.get("startTime")
         notes = data.get("notes")
         recipe_id = data.get("recipe_id")
         start_date = data.get("start")
 
-        if not all([meal_id, title, start_time, start_date]):
+        if not all([meal_id, title, start_time, start_date, serving_size]):
             return jsonify({"error": "Missing required fields"}), 400
 
         try:
             combined_datetime = datetime.strptime(f"{start_date} {start_time}", "%Y-%m-%d %H:%M")
         except ValueError:
-            return jsonify({"error": "Invalid date/time format"}), 400
+            return jsonify({"error": "Invalid time format. Use 24 Hour format (00:00)"}), 400
 
         meal = PlannedMeal.query.get(meal_id)
         if not meal:
             return jsonify({"error": "Meal not found"}), 404
 
         meal.title = title
+        meal.serving_size = serving_size
         meal.datetime = combined_datetime
         meal.notes = notes
         meal.recipe_id = recipe_id
@@ -144,8 +149,22 @@ class CalendarService:
                 "end": end_dt.isoformat(),
                 "extendedProps": {
                     "recipe_id": meal.recipe.id,
+                    "serving_size": meal.serving_size,
                     "notes": meal.notes or ""
                 }
             })
 
         return jsonify(events)
+    
+    @staticmethod
+    def format_meal_page(meal_id, session):
+        """ Returns the meal page given an ID """
+        meal = PlannedMeal.query.get(meal_id)
+        recipe = meal.recipe
+
+        if recipe is None:
+            return "Recipe not found.", 404
+
+        uid = session.get("uid")
+
+        return render_template("meal_recipe.html", meal=meal, uid=uid)
