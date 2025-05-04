@@ -69,12 +69,6 @@ def recipe(recipe_id):
 def export_recipe(recipe_id):
     export_type = request.args.get('type')
     return RecipeService.export_recipe(recipe_id, export_type)
-#
-# def login():
-#     if 'user' in session:
-#         return redirect(url_for('dashboard'))
-#     else:
-#         return render_template('login.html')
 
 @app.route('/signup')
 def signup():
