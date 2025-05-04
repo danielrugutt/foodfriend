@@ -40,7 +40,7 @@ def auth_route():
 """ GUEST ROUTES """
 @app.route('/')
 def home():
-    return render_template('home.html')
+    render_template('login.html')
 
 @app.route('/search', methods=['GET', 'POST'])
 def search():

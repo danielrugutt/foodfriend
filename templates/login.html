@@ -9,11 +9,15 @@
   </head>
 
   <body>
-    {% include 'navbar_public.html' %}
 
     <main>
 
       <div class="auth-page_container">
+
+
+         <div class="info-container">
+                <h1>FoodFriend</h1>
+        </div>
 
         <div class="login-form-container">
 
@@ -45,6 +49,9 @@
             <div class="signup-link-container"><a href="{{ url_for('reset_password') }}">Forgot Password?</a></div>
           </div>
 
+        </div>
+         <div class="info-container">
+                <p>Welcome to FoodFriend! Please sign in to access the application.</p>
         </div>
 
       </div>
