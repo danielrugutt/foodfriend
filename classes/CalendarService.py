@@ -161,10 +161,11 @@ class CalendarService:
         """ Returns the meal page given an ID """
         meal = PlannedMeal.query.get(meal_id)
         recipe = meal.recipe
+        steps = recipe.get_steps()
 
         if recipe is None:
             return "Recipe not found.", 404
 
         uid = session.get("uid")
 
-        return render_template("meal_recipe.html", meal=meal, uid=uid)
+        return render_template("meal_recipe.html", meal=meal, uid=uid, steps=steps)
