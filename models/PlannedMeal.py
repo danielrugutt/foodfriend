@@ -13,11 +13,14 @@ class PlannedMeal(db.Model):
 
     datetime = db.Column(db.DateTime, nullable=False)
     title = db.Column(db.String, nullable=False, unique=False)
+    serving_size = db.Column(db.Integer, nullable=False, unique=False)
     notes = db.Column(db.String, nullable=True, unique=False)
 
-    def __init__(self, title, user, recipe, datetime, notes):
+    def __init__(self, title, user, recipe, datetime, serving_size, notes):
         self.title = title
         self.user = user
         self.recipe = recipe
         self.datetime = datetime
+        self.serving_size = serving_size
         self.notes = notes
+

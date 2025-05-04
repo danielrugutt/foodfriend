@@ -128,6 +128,11 @@ def get_planned_meals():
 def get_all_recipes():
     return CalendarService.get_all_recipes()
 
+@app.route('/meal_recipe/<int:meal_id>')
+@auth_required
+def meal(meal_id):
+    return CalendarService.format_meal_page(meal_id, session)
+
 @app.route('/recipe/<int:recipe_id>/bookmark/', methods=["POST"])
 @auth_required
 def save_to_list(recipe_id):

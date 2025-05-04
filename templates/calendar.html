@@ -94,6 +94,9 @@
       <option value="">-- Select a recipe --</option>
     </select>
 
+    <label for="serving_size">Servings:</label>
+    <input type="number" id="serving_size" min="1" required>
+
     <label for="mealNotes">Notes:</label>
     <textarea id="mealNotes" rows="4"></textarea>
 
@@ -116,6 +119,7 @@
   function setFormEditable(isEditable, isNewMeal = false, recipeId = null) {
     document.getElementById('mealTitle').readOnly = !isEditable;
     document.getElementById('startTime').readOnly = !isEditable;
+    document.getElementById('serving_size').readOnly = !isEditable;
     document.getElementById('mealNotes').readOnly = !isEditable;
     document.getElementById('recipeSelect').disabled = !isEditable;
 
@@ -140,6 +144,7 @@
 
         document.getElementById('mealTitle').value = '';
         document.getElementById('startTime').value = '';
+        document.getElementById('serving_size').value = '';
         document.getElementById('mealNotes').value = '';
         document.getElementById('recipeSelect').selectedIndex = 0;
 
@@ -161,6 +166,7 @@
 
         document.getElementById('mealTitle').value = event.title || '';
         document.getElementById('startTime').value = event.start.toTimeString().slice(0,5);
+        document.getElementById('serving_size').value = event.extendedProps.serving_size || 1;
         document.getElementById('mealNotes').value = event.extendedProps.notes || '';
         document.getElementById('recipeSelect').value = recipeId;
 
@@ -218,12 +224,14 @@
 
     const title = document.getElementById('mealTitle').value.trim();
     const startTime = document.getElementById('startTime').value.trim();
+    const serving_size = parseInt(document.getElementById('serving_size').value);
     const notes = document.getElementById('mealNotes').value.trim();
     const recipeId = parseInt(document.getElementById('recipeSelect').value);
 
     const payload = {
       title: title,
       startTime: startTime,
+      serving_size: serving_size,
       notes: notes,
       recipe_id: recipeId,
       start: selectedDate
@@ -235,26 +243,38 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
-      }).then(response => {
+      })
+      .then(async response => {
+        const data = await response.json();
         if (response.ok) {
           document.getElementById('mealModal').style.display = 'none';
           calendar.refetchEvents();
         } else {
-          alert("Failed to update meal.");
+          alert("Failed to update meal: " + (data.error || "Unknown error"));
         }
-      });
+      })
+.catch(err => {
+  console.error("Network or server error:", err);
+  alert("Something went wrong while updating the meal.");
+});
     } else {
       fetch('/add-meal', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
-      }).then(response => {
+      })
+      .then(async response => {
+        const data = await response.json();
         if (response.ok) {
           document.getElementById('mealModal').style.display = 'none';
           calendar.refetchEvents();
         } else {
-          alert("Failed to add meal.");
+          alert("Failed to add meal: " + (data.error || "Unknown error"));
         }
+      })
+      .catch(err => {
+        console.error("Network or server error:", err);
+        alert("Something went wrong while adding the meal.");
       });
     }
   });
@@ -266,9 +286,9 @@
   });
 
   document.getElementById('viewRecipeBtn').addEventListener('click', function() {
-    const recipeId = document.getElementById('recipeSelect').value;
-    if (recipeId) {
-      window.location.href = `/recipe/${recipeId}`;
+    const mealId = currentMealId;
+    if (mealId) {
+      window.location.href = `/meal_recipe/${mealId}`;
     }
   });
 

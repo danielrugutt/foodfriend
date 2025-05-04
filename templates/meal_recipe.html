@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
+
+  <title>{{meal.recipe.title}}</title>
+  </head>
+
+
+<body>
+    {% include 'navbar_private.html' %}
+    <main>
+        <a href="{{ url_for('search_similar', recipe_id=meal.recipe.id,orig_recipe=meal.recipe.title)}}" class="button">Search Similar Recipe</a>
+
+        <h1>{{ meal.recipe.title }}</h1>
+            {% if meal.recipe.img_url %}
+            <img src ="{{meal.recipe.img_url}}">
+            {%endif%}
+            
+            {% if meal.recipe.cuisine %}
+            <p><strong>Cuisine:</strong> {{ meal.recipe.cuisine }}</p>
+            {% endif %}
+
+            {% if meal.recipe.cooking_time %}
+            <p><strong>Cooking Time:</strong> {{ meal.recipe.cooking_time }} minutes</p>
+            {% endif %}
+
+            {% if meal.serving_size %}
+            <p><strong>Servings:</strong> {{ meal.serving_size }}</p>
+            {% endif %}
+
+            {% if meal.recipe.diet %}
+            <p><strong>Diet:</strong> {{ ", ".join(meal.recipe.diet) }}</p>
+            {% endif %}
+
+            {% if meal.recipe.intolerances %}
+            <p><strong>Intolerances:</strong> {{ ", ".join(meal.recipe.intolerances) }}</p>
+            {% endif %}
+
+
+        <h2>Ingredients</h2>
+        <ul>
+            {% for ingredient in meal.recipe.ingredients %}
+                {% if ingredient.unit %}
+                <li>{{ (meal.serving_size/meal.recipe.servings) * ingredient.quantity }} {{ ingredient.unit }} {{ ingredient.name }}</li>
+                {% else %}
+                <li>{{ (meal.serving_size/meal.recipe.servings) * ingredient.quantity }} {{ ingredient.name }}</li>
+                {% endif %}
+
+            {% endfor %}
+        </ul>
+
+        <h2>Steps</h2>
+        <ol>
+            {% for step in meal.recipe.steps %}
+                <li>{{ step }}</li>
+            {% endfor %}
+        </ol>
+
+        {# <h2>Nutrition Info</h2>
+        <p><strong>Calories:</strong> {{ meal.recipe.nutrition_info.calories }}</p>
+        <p><strong>Protein:</strong> {{ meal.recipe.nutrition_info.protein }}g</p>
+        <p><strong>Carbs:</strong> {{ meal.recipe.nutrition_info.carbs }}g</p>
+        <p><strong>Fats:</strong> {{ meal.recipe.nutrition_info.fats }}g</p> #}
+
+
+    <a href="{{ url_for('export_recipe', recipe_id=meal.recipe.id, type='email') }}">Share</a>
+    <a href="{{ url_for('export_recipe', recipe_id=meal.recipe.id, type='pdf') }}">Download</a>
+    <br><br><br>
+
+
+    <script src="../static/login-auth.js" type="module"></script>
+    </main>
+
+</body>
+</html>
