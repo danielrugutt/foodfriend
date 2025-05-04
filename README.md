@@ -38,7 +38,7 @@ npm install
 npm install -g firebase-tools
 ```
 
-6. Make .env & firebase-auth.json in the root directory, and download the keys from Sendto 
+6. Make .env & firebase-auth.json in the root directory, and make sure the .env file is placed in the root directory.
 
 ### To run
 If using a venv and not in it, make sure to start it first.
@@ -72,5 +72,3 @@ python test_foodfriend.py
 - Daniel Rugutt: danielrugutt
 - Natalie Simova: naaatami
 - Noah Ludy: Nludy12
-
-URL to the live website:  https://foodfriend-a774e.web.app
