@@ -262,8 +262,6 @@ class Database(DatabaseInterface):
                 bookmark_list = RecipeListModel(name="Bookmarks", user_id=uid)
                 db.session.add(bookmark_list)
                 db.session.commit()
-                print("added default bookmark list")
-                print(bookmark_list.id)
 
             return bookmark_list.id
 
@@ -281,7 +279,6 @@ class Database(DatabaseInterface):
                 recipe_list = RecipeListModel.query.filter_by(id=list_id, user_id=uid).first()
 
             if not recipe_list:
-                print("No matching recipe list, could not add")
                 return False
 
             # checks if the recipe and recipe list are already together - if no, uses the join table to add to the database
