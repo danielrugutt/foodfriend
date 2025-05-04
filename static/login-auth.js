@@ -209,7 +209,6 @@ function resetPassword() {
 
 
 function loginUser(user, idToken) {
-    console.log("ID Token:", idToken);
     fetch('/auth', {
         method: 'POST',
         headers: {

@@ -39,14 +39,17 @@ def auth_route():
 
 """ GUEST ROUTES """
 @app.route('/')
-def home():
-    return render_template('home.html')
+@app.route('/login')
+def login():
+    if 'user' in session:
+        return redirect(url_for('dashboard'))
+    else:
+        return render_template('login.html')
 
 @app.route('/search', methods=['GET', 'POST'])
 def search():
     uid = session.get("uid")
     return SearchService.search(uid,request)
-
 
 @app.route('/search-similar/<int:recipe_id>/<string:orig_recipe>', methods=['GET', 'POST'])
 def search_similar(recipe_id,orig_recipe):
@@ -66,13 +69,6 @@ def recipe(recipe_id):
 def export_recipe(recipe_id):
     export_type = request.args.get('type')
     return RecipeService.export_recipe(recipe_id, export_type)
-
-@app.route('/login')
-def login():
-    if 'user' in session:
-        return redirect(url_for('dashboard'))
-    else:
-        return render_template('login.html')
 
 @app.route('/signup')
 def signup():

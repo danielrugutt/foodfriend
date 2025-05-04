@@ -10,17 +10,17 @@
   <body>
     {% include 'navbar_private.html' %}
     <main>
-    <h1>Profile</h1>
+    <h1 id="profile-title">Profile</h1>
         <div>
             <label>Change email:</label>
-            <input type="text" id="emailChangeInput"/>
-<!--            <button type="button" id="changeEmail">Add</button>-->
+            <input type="text" id="emailChangeInput" placeholder="New email"/>
         </div>
 
         <br>
 
         <div id="passwordPopup">
-            <input type="password" id="passwordInput" placeholder="Enter current password to change email"/>
+            <label>Confirm password to change email:</label>
+            <input type="password" id="passwordInput" placeholder="Password"/>
             <button id="confirmPasswordButton">Confirm</button>
         </div>
 
@@ -43,8 +43,7 @@
         </div>
     </main>
 0
-    <script src="../static/delete-account.js"></script>
-    <script src="../static/change-email.js" type="module"></script>
+    <script src="../static/profile.js" type="module"></script>
     <script src="{{ url_for('static', filename='login-auth.js') }}" type="module"></script>
   </body>
 </html>
