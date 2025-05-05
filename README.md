@@ -69,6 +69,5 @@ python test_foodfriend.py
 ### Contributors
 - Van Anderson: Van-Anderson
 - Nick Kolesar: Indigenous1151
-- Daniel Rugutt: danielrugutt
 - Natalie Simova: naaatami
 - Noah Ludy: Nludy12
